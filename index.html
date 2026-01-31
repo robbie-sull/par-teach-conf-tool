@@ -1,9 +1,12 @@
-<!DOCTYPE html>
+     <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>HCS Conference Planner Pro</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <style>
         :root {
             --hcs-green: #2e5233;
@@ -15,60 +18,116 @@
             --success: #4b7f52;
         }
 
-        body { font-family: 'Inter', 'Segoe UI', sans-serif; background: var(--hcs-light-grey); color: var(--text-main); margin: 0; padding-bottom: 50px; }
+        /* RESET & BASE */
+        body { 
+            font-family: 'Inter', -apple-system, sans-serif; 
+            background: var(--hcs-light-grey); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding-bottom: 80px; 
+            line-height: 1.5;
+        }
 
+        /* RESPONSIVE HEADER */
         header {
             background: var(--hcs-green);
-            padding: 0.5rem 2rem;
+            padding: 10px 15px;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
+            gap: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             position: sticky;
             top: 0;
             z-index: 1000;
         }
-        .logo-container img { height: 45px; display: block; }
-        nav { display: flex; gap: 8px; }
+        @media (min-width: 600px) {
+            header { flex-direction: row; justify-content: space-between; padding: 0.5rem 2rem; }
+        }
+
+        .logo-container img { height: 35px; }
+        @media (min-width: 600px) { .logo-container img { height: 45px; } }
+
+        nav { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
         nav button { 
             background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); 
-            color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.85rem;
+            color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; 
+            font-weight: 600; font-size: 0.75rem; transition: 0.2s;
         }
-        nav button:hover { background: var(--hcs-gold); color: var(--hcs-green); border-color: var(--hcs-gold); }
         
-        .container { max-width: 900px; margin: 2rem auto; background: white; padding: 2.5rem; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        /* ADMIN HIDING LOGIC */
+        nav button:not([onclick*="'signup'"]) { display: none; }
+        .admin-unlocked nav button { display: inline-block !important; }
+
+        /* MAIN CONTAINER */
+        .container { 
+            width: 95%;
+            max-width: 900px; 
+            margin: 1rem auto; 
+            background: white; 
+            padding: 15px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
+            box-sizing: border-box;
+        }
+        @media (min-width: 600px) { .container { margin: 2rem auto; padding: 2.5rem; } }
+
         .page { display: none; }
         .active { display: block; }
 
-        h2 { color: var(--hcs-green); border-bottom: 2px solid var(--hcs-light-grey); padding-bottom: 10px; margin-bottom: 20px; }
-        .day-config-card { background: #fcfcfc; border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-        .student-hero { font-size: 2rem; color: var(--hcs-green); border-left: 6px solid var(--hcs-gold); padding-left: 15px; font-weight: 800; }
-        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        
-        .btn { padding: 12px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; border: none; transition: 0.3s; text-transform: uppercase; }
-        .btn-primary { background: var(--hcs-green); color: white; width: 100%; }
-        .btn-signup { background: var(--success); color: white; font-size: 0.8rem; }
-        .btn-cancel { background: #fff; color: var(--danger); border: 1px solid var(--danger); font-size: 0.75rem; padding: 5px 10px; }
-        .btn-cancel:hover { background: var(--danger); color: white; }
+        h2 { color: var(--hcs-green); font-size: 1.4rem; border-bottom: 2px solid var(--hcs-light-grey); padding-bottom: 10px; margin-top: 0; }
 
-        .day-header { background: var(--hcs-green); color: white; padding: 10px 15px; margin-top: 25px; border-radius: 4px; font-weight: bold; }
-        .signup-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #eee; }
-        .signup-time { font-weight: bold; color: var(--hcs-green); width: 100px; }
-        .signup-status { flex-grow: 1; }
-        .reserved-name { color: var(--hcs-gold); font-weight: bold; }
-        
-        .dashboard-day-section { margin-top: 30px; }
-        .dashboard-day-label { color: var(--hcs-green); font-size: 1.2rem; font-weight: 800; margin-bottom: 10px; display: block; }
+        /* INPUTS & BUTTONS */
+        input, select, textarea { 
+            font-size: 16px !important; 
+            width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; 
+        }
+        .btn { 
+            padding: 16px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; border: none; 
+            transition: 0.3s; width: 100%; display: block; text-align: center; font-size: 1rem;
+        }
+        .btn-primary { background: var(--hcs-green); color: white; }
+        .btn-signup { background: var(--success); color: white; padding: 10px 14px; font-size: 0.85rem; width: auto; }
+        .btn-pdf { background: #555; color: white; margin-bottom: 20px; width: auto; display: inline-block; padding: 10px 20px; font-size: 0.8rem; }
+
+        /* SIGNUP ROWS */
+        .day-header { background: var(--hcs-green); color: white; padding: 12px 15px; margin-top: 25px; border-radius: 6px; font-weight: bold; }
+        .signup-row { 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 15px 10px; border-bottom: 1px solid #eee; gap: 10px;
+        }
+        .signup-time { font-weight: bold; color: var(--hcs-green); min-width: 80px; }
+        .signup-status { flex-grow: 1; font-size: 0.9rem; }
+
+        /* RESPONSIVE STUDENT LIST (Table to Cards) */
+        .student-list-container table { width: 100%; border-collapse: collapse; }
+        .student-card { 
+            border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 10px; 
+            display: flex; justify-content: space-between; align-items: center; 
+        }
+        @media (max-width: 600px) {
+            .student-list-container table { display: none; }
+            .student-card { display: flex; }
+        }
+        @media (min-width: 601px) {
+            .student-card { display: none; }
+        }
+
+        /* TIMER & DASHBOARD */
         .dashboard-item { 
             border: 1px solid #eee; padding: 15px; background: white; border-radius: 6px; 
             display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; margin-bottom: 8px;
         }
-        .dashboard-item:hover { border-color: var(--hcs-gold); transform: translateX(5px); }
-        .talking-points-box { background: #fdfaf3; padding: 20px; border-radius: 8px; border: 1px solid #e9dfc4; margin: 20px 0; }
-        .timer-display { font-size: 4.5rem; font-weight: 800; color: var(--hcs-gold); text-align: center; font-family: monospace; }
+        .timer-display { font-size: 3.5rem; font-weight: 800; color: var(--hcs-gold); text-align: center; margin: 20px 0; font-family: monospace; }
+        @media (min-width: 600px) { .timer-display { font-size: 5rem; } }
 
+        /* MODALS */
         .modal { display:none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
-        .modal-content { background: white; margin: 10% auto; padding: 30px; width: 400px; border-radius: 8px; }
+        .modal-content { background: white; margin: 15% auto; padding: 25px; width: 85%; max-width: 400px; border-radius: 12px; }
+
+        /* PRINT / PDF OVERRIDES */
+        #pdf-content { padding: 20px; }
+        .print-only { display: none; }
     </style>
 </head>
 <body>
@@ -84,66 +143,63 @@
 </header>
 
 <div class="container">
-    <section id="config" class="page active">
-        <h2>Multi-Day Configuration</h2>
+    <section id="config" class="page">
+        <h2>Settings</h2>
         <div class="day-config-card">
             <strong style="color:var(--hcs-green)">Day 1</strong>
             <input type="date" id="date1">
-            <div style="display:flex; gap:10px;">
+            <div style="display:flex; gap:10px; align-items: center;">
                 <input type="time" id="start1" value="15:30"> to <input type="time" id="end1" value="19:00">
             </div>
         </div>
         <div class="day-config-card">
             <strong style="color:var(--hcs-green)">Day 2</strong>
             <input type="date" id="date2">
-            <div style="display:flex; gap:10px;">
+            <div style="display:flex; gap:10px; align-items: center;">
                 <input type="time" id="start2" value="08:00"> to <input type="time" id="end2" value="12:00">
             </div>
         </div>
-        <label>Conference Duration (min)</label><input type="number" id="duration" value="15">
-        <p style="font-size: 0.85rem; color: #666; font-style: italic;">A 5-minute break is added between slots.</p>
+        <label>Slot Duration (min)</label>
+        <input type="number" id="duration" value="15">
         <button class="btn btn-primary" onclick="saveConfig()">Save All Settings</button>
     </section>
 
     <section id="prep" class="page">
-        <h2>Student Preparation</h2>
+        <h2>Student Prep</h2>
         <input type="text" id="sName" placeholder="Student Name">
         <input type="text" id="pNames" placeholder="Parent Names">
-        <textarea id="sNotes" placeholder="Key talking points..."></textarea>
+        <textarea id="sNotes" placeholder="Talking points..." rows="3"></textarea>
         <button class="btn btn-primary" onclick="addStudent()">Save Student</button>
         
         <h3 style="margin-top: 30px; color: var(--hcs-green)">Class List</h3>
-        <table style="width:100%; margin-top:10px; border-collapse: collapse;">
-            <thead>
-                <tr style="text-align:left; color:var(--hcs-green); border-bottom: 2px solid var(--hcs-light-grey);">
-                    <th style="padding:10px">Student</th>
-                    <th style="padding:10px">Parents</th>
-                    <th style="padding:10px">Action</th>
-                </tr>
-            </thead>
-            <tbody id="studentListTable"></tbody>
-        </table>
+        <div id="studentListView" class="student-list-container"></div>
     </section>
 
-    <section id="signup" class="page">
+    <section id="signup" class="page active">
         <h2>Conference Sign-Up</h2>
         <div id="signupContainer"></div>
     </section>
 
     <section id="dashboard" class="page">
-        <h2>Conference Schedule</h2>
-        <div id="dashboardLists"></div>
-        <div id="meetingView" style="display:none; margin-top:40px; border-top: 2px solid #eee; padding-top:20px;">
-            <h1 class="student-hero" id="curName"></h1>
-            <p><strong>Parents:</strong> <span id="curParents"></span></p>
-            <div class="talking-points-box">
-                <strong>Discussion Items:</strong><br>
-                <div id="curNotes" style="white-space: pre-wrap; margin-top:10px;"></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+            <h2>Master Schedule</h2>
+            <button class="btn btn-pdf" onclick="exportToPDF()">Download PDF</button>
+        </div>
+        
+        <div id="pdf-area">
+            <div id="dashboardLists"></div>
+        </div>
+
+        <div id="meetingView" style="display:none; margin-top:30px; border-top: 2px solid #eee; padding-top:20px;">
+            <h1 style="color:var(--hcs-green); margin:0;" id="curName"></h1>
+            <p id="curParents" style="color:#666;"></p>
+            <div style="background:#fdfaf3; padding:15px; border-radius:8px; border:1px solid #e9dfc4; margin:15px 0;">
+                <div id="curNotes" style="white-space: pre-wrap;"></div>
             </div>
             <div class="timer-display" id="timer">15:00</div>
-            <div style="display:flex; gap:10px; justify-content:center;">
-                <button class="btn btn-primary" style="width:150px" onclick="startTimer()">Start</button>
-                <button class="btn" style="background:#ccc; width:150px" onclick="resetTimer()">Reset</button>
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-primary" onclick="startTimer()">Start</button>
+                <button class="btn" style="background:#ccc;" onclick="resetTimer()">Reset</button>
             </div>
         </div>
     </section>
@@ -160,189 +216,226 @@
     </div>
 </div>
 
-<script>
-    // LOAD DATA IMMEDIATELY
-    let config = JSON.parse(localStorage.getItem('hcs_conf')) || { duration: 15, days: [{date:'',start:'',end:''},{date:'',start:'',end:''}] };
-    let students = JSON.parse(localStorage.getItem('hcs_stud')) || [];
-    let bookings = JSON.parse(localStorage.getItem('hcs_book')) || [];
-    let activeSlot = null;
+<div id="adminModal" class="modal">
+    <div class="modal-content">
+        <h3>Admin Access</h3>
+        <input type="password" id="adminPass" placeholder="Password">
+        <button class="btn btn-primary" onclick="checkPassword()" style="margin-top:10px;">Login</button>
+        <button class="btn" style="background:none; color:#999; margin-top:10px;" onclick="closeAdminModal()">Cancel</button>
+    </div>
+</div>
 
-    function showPage(id) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        if(id === 'prep') renderStudents();
-        if(id === 'signup') renderSignup();
-        if(id === 'dashboard') renderDashboard();
+<footer style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+    <button onclick="openAdminModal()" style="background:none; border:none; color:#ccc; font-size:0.8rem; cursor:pointer;">Admin Login</button>
+</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAyLe9NtrYn8CEkyPZmTeDq37kp3kWujJc",
+    authDomain: "hcs-planner.firebaseapp.com",
+    databaseURL: "https://hcs-planner-default-rtdb.firebaseio.com",
+    projectId: "hcs-planner",
+    storageBucket: "hcs-planner.firebasestorage.app",
+    messagingSenderId: "73659830739",
+    appId: "1:73659830739:web:e29f96aea7d83ea4fb1f26"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+let config = { duration: 15, days: [{date:'',start:'',end:''},{date:'',start:'',end:''}] };
+let students = [];
+let bookings = [];
+let isAdmin = false;
+let activeSlot = null;
+
+// --- EXPOSE FUNCTIONS TO WINDOW ---
+window.showPage = (id) => {
+    if(!isAdmin && id !== 'signup') { alert("Admin access required."); return; }
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+};
+
+window.openAdminModal = () => document.getElementById('adminModal').style.display = 'block';
+window.closeAdminModal = () => document.getElementById('adminModal').style.display = 'none';
+
+window.checkPassword = () => {
+    if(document.getElementById('adminPass').value === "HCS2026") {
+        isAdmin = true;
+        document.body.classList.add('admin-unlocked');
+        window.closeAdminModal();
+        window.showPage('dashboard');
+    } else { alert("Wrong password."); }
+};
+
+window.saveConfig = () => {
+    const newConfig = {
+        duration: parseInt(document.getElementById('duration').value),
+        days: [
+            { date: document.getElementById('date1').value, start: document.getElementById('start1').value, end: document.getElementById('end1').value },
+            { date: document.getElementById('date2').value, start: document.getElementById('start2').value, end: document.getElementById('end2').value }
+        ]
+    };
+    set(ref(db, 'config'), newConfig);
+    alert("Saved to cloud!");
+};
+
+window.addStudent = () => {
+    const name = document.getElementById('sName').value;
+    const pNames = document.getElementById('pNames').value;
+    const notes = document.getElementById('sNotes').value;
+    if(!name) return;
+    const id = Date.now();
+    set(ref(db, 'students/' + id), { id, name, parents: pNames, notes });
+    document.getElementById('sName').value = '';
+    document.getElementById('pNames').value = '';
+    document.getElementById('sNotes').value = '';
+};
+
+window.removeStudent = (id) => remove(ref(db, 'students/' + id));
+
+window.openModal = (slotId, timeLabel) => {
+    activeSlot = slotId;
+    document.getElementById('mTime').innerText = timeLabel;
+    const bookedIds = bookings.map(b => b.studentId);
+    const avail = students.filter(s => !bookedIds.includes(s.id));
+    document.getElementById('mStudentSelect').innerHTML = avail.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    if(avail.length === 0) { alert("All students scheduled."); return; }
+    document.getElementById('signupModal').style.display = 'block';
+};
+
+window.closeModal = () => document.getElementById('signupModal').style.display = 'none';
+
+window.confirmBooking = () => {
+    const sId = parseInt(document.getElementById('mStudentSelect').value);
+    const s = students.find(stud => stud.id === sId);
+    const [date, time] = activeSlot.split('|');
+    const bId = activeSlot.replace(/[^a-zA-Z0-9]/g, ""); 
+    set(ref(db, 'bookings/' + bId), { slotId: activeSlot, date, time, studentId: s.id, studentName: s.name });
+    window.closeModal();
+};
+
+window.cancelBooking = (slotId) => {
+    remove(ref(db, 'bookings/' + slotId.replace(/[^a-zA-Z0-9]/g, "")));
+};
+
+window.loadMeeting = (id) => {
+    const s = students.find(stud => stud.id === id);
+    document.getElementById('meetingView').style.display = 'block';
+    document.getElementById('curName').innerText = s.name;
+    document.getElementById('curParents').innerText = s.parents || "No parents listed";
+    document.getElementById('curNotes').innerText = s.notes || "";
+    window.resetTimer();
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+};
+
+// --- PDF EXPORT LOGIC ---
+window.exportToPDF = () => {
+    const element = document.getElementById('pdf-area');
+    const opt = {
+        margin: 10,
+        filename: `HCS-Conferences-${new Date().toLocaleDateString()}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+};
+
+// --- DATA LISTENERS ---
+onValue(ref(db, 'config'), (snap) => {
+    if (snap.exists()) {
+        config = snap.val();
+        document.getElementById('date1').value = config.days[0].date;
+        document.getElementById('start1').value = config.days[0].start;
+        document.getElementById('end1').value = config.days[0].end;
+        document.getElementById('date2').value = config.days[1].date;
+        document.getElementById('start2').value = config.days[1].start;
+        document.getElementById('end2').value = config.days[1].end;
+        document.getElementById('duration').value = config.duration;
     }
+    renderSignup();
+});
 
-    function saveConfig() {
-        config = {
-            duration: parseInt(document.getElementById('duration').value),
-            days: [
-                { date: document.getElementById('date1').value, start: document.getElementById('start1').value, end: document.getElementById('end1').value },
-                { date: document.getElementById('date2').value, start: document.getElementById('start2').value, end: document.getElementById('end2').value }
-            ]
-        };
-        localStorage.setItem('hcs_conf', JSON.stringify(config));
-        alert("Configuration saved!");
-    }
-
-    function addStudent() {
-        const name = document.getElementById('sName').value;
-        const parents = document.getElementById('pNames').value;
-        if(!name) return;
-        students.push({ id: Date.now(), name, parents, notes: document.getElementById('sNotes').value });
-        localStorage.setItem('hcs_stud', JSON.stringify(students));
-        renderStudents();
-        document.getElementById('sName').value = '';
-        document.getElementById('pNames').value = '';
-        document.getElementById('sNotes').value = '';
-    }
-
-    function renderStudents() {
-        const tbody = document.getElementById('studentListTable');
-        tbody.innerHTML = students.map(s => `
-            <tr style="border-bottom:1px solid #eee">
-                <td style="padding:10px"><strong>${s.name}</strong></td>
-                <td style="padding:10px">${s.parents || '—'}</td>
-                <td style="padding:10px"><button class="btn-cancel" onclick="removeStudent(${s.id})">Delete</button></td>
-            </tr>
-        `).join('');
-    }
-
-    function removeStudent(id) {
-        students = students.filter(s => s.id !== id);
-        bookings = bookings.filter(b => b.studentId !== id);
-        localStorage.setItem('hcs_stud', JSON.stringify(students));
-        localStorage.setItem('hcs_book', JSON.stringify(bookings));
-        renderStudents();
-    }
-
-    function renderSignup() {
-        const container = document.getElementById('signupContainer');
-        container.innerHTML = '';
-        if(!config.days[0].date) { container.innerHTML = "<p>Please set dates in Settings first.</p>"; return; }
-
-        config.days.forEach((day, dayIdx) => {
-            if(!day.date) return;
-            const header = document.createElement('div');
-            header.className = 'day-header';
-            header.innerText = `Day ${dayIdx + 1}: ${day.date}`;
-            container.appendChild(header);
-
-            let curr = new Date(`2026-01-01T${day.start}`);
-            let end = new Date(`2026-01-01T${day.end}`);
-
-            while(curr < end) {
-                let tStr = curr.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                let bKey = `${day.date}|${tStr}`; // Standardized Key
-                let booking = bookings.find(b => b.slotId === bKey);
-
-                const row = document.createElement('div');
-                row.className = 'signup-row';
-                row.innerHTML = `
-                    <div class="signup-time">${tStr}</div>
-                    <div class="signup-status">${booking ? `<span class="reserved-name">${booking.studentName}</span>` : 'Available'}</div>
-                    <div>
-                        ${booking ? `<button class="btn-cancel" onclick="cancelBooking('${bKey}')">Cancel</button>` : `<button class="btn btn-signup" onclick="openModal('${bKey}', '${tStr}')">Sign Up</button>`}
-                    </div>
-                `;
-                container.appendChild(row);
-                curr.setMinutes(curr.getMinutes() + config.duration + 5);
-            }
-        });
-    }
-
-    function openModal(slotId, timeLabel) {
-        activeSlot = slotId;
-        document.getElementById('mTime').innerText = timeLabel;
-        const bookedIds = bookings.map(b => b.studentId);
-        const avail = students.filter(s => !bookedIds.includes(s.id));
-        document.getElementById('mStudentSelect').innerHTML = avail.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-        if(avail.length === 0) { alert("All students are scheduled."); return; }
-        document.getElementById('signupModal').style.display = 'block';
-    }
-
-    function closeModal() { document.getElementById('signupModal').style.display = 'none'; }
-
-    function confirmBooking() {
-        const sId = parseInt(document.getElementById('mStudentSelect').value);
-        const s = students.find(stud => stud.id === sId);
-        const [date, time] = activeSlot.split('|');
-        bookings.push({ slotId: activeSlot, date, time, studentId: s.id, studentName: s.name });
-        localStorage.setItem('hcs_book', JSON.stringify(bookings));
-        closeModal();
-        renderSignup();
-    }
-
-    function cancelBooking(slotId) {
-        bookings = bookings.filter(b => b.slotId !== slotId);
-        localStorage.setItem('hcs_book', JSON.stringify(bookings));
-        renderSignup();
-    }
-
-    function renderDashboard() {
-        const container = document.getElementById('dashboardLists');
-        container.innerHTML = '';
-        
-        config.days.forEach((day, idx) => {
-            if(!day.date) return;
-            const dateParts = day.date.split('-');
-            const mmdd = `${dateParts[1]}/${dateParts[2]}`;
-            
-            const section = document.createElement('div');
-            section.className = 'dashboard-day-section';
-            section.innerHTML = `<span class="dashboard-day-label">Day ${idx+1} — ${mmdd}</span>`;
-            
-            const dayBookings = bookings.filter(b => b.date === day.date);
-            dayBookings.sort((a, b) => a.time.localeCompare(b.time));
-            
-            if(dayBookings.length === 0) {
-                section.innerHTML += `<p style="color:#999; margin-left:15px;">No appointments.</p>`;
-            } else {
-                dayBookings.forEach(b => {
-                    const item = document.createElement('div');
-                    item.className = 'dashboard-item';
-                    item.onclick = () => loadMeeting(b.studentId);
-                    item.innerHTML = `<span><strong>${mmdd} — ${b.time}</strong></span><span style="color:var(--hcs-green); font-weight:bold;">${b.studentName}</span>`;
-                    section.appendChild(item);
-                });
-            }
-            container.appendChild(section);
-        });
-    }
-
-    function loadMeeting(id) {
-        const s = students.find(stud => stud.id === id);
-        if(!s) return;
-        document.getElementById('meetingView').style.display = 'block';
-        document.getElementById('curName').innerText = s.name;
-        document.getElementById('curParents').innerText = s.parents || "Not provided";
-        document.getElementById('curNotes').innerText = s.notes || "";
-        resetTimer();
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }
-
-    let tLeft, interval;
-    function startTimer() {
-        if(interval) return;
-        interval = setInterval(() => {
-            tLeft--; updateDisp();
-            if(tLeft <= 0) { clearInterval(interval); alert("Time is up!"); }
-        }, 1000);
-    }
-    function resetTimer() {
-        clearInterval(interval); interval = null;
-        tLeft = config.duration * 60;
-        updateDisp();
-    }
-    function updateDisp() {
-        const m = Math.floor(tLeft / 60), s = tLeft % 60;
-        document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-    }
-
-    // Initialize UI
+onValue(ref(db, 'students'), (snap) => {
+    students = snap.exists() ? Object.values(snap.val()) : [];
     renderStudents();
+});
+
+onValue(ref(db, 'bookings'), (snap) => {
+    bookings = snap.exists() ? Object.values(snap.val()) : [];
+    renderSignup();
+    renderDashboard();
+});
+
+// --- RENDERERS ---
+function renderStudents() {
+    const view = document.getElementById('studentListView');
+    let html = `<table style="width:100%; text-align:left;"><tr style="border-bottom:2px solid #eee"><th>Name</th><th>Parents</th><th>Action</th></tr>`;
+    students.forEach(s => {
+        html += `<tr style="border-bottom:1px solid #eee"><td style="padding:10px">${s.name}</td><td>${s.parents}</td><td><button class="btn-cancel" onclick="removeStudent(${s.id})">Del</button></td></tr>`;
+    });
+    html += `</table>`;
+    students.forEach(s => {
+        html += `<div class="student-card"><div><strong>${s.name}</strong><br><small>${s.parents}</small></div><button class="btn-cancel" onclick="removeStudent(${s.id})">Delete</button></div>`;
+    });
+    view.innerHTML = html;
+}
+
+function renderSignup() {
+    const container = document.getElementById('signupContainer');
+    container.innerHTML = '';
+    if(!config.days[0].date) { container.innerHTML = "<p>Teacher is setting up the dates...</p>"; return; }
+
+    config.days.forEach((day, idx) => {
+        if(!day.date) return;
+        const h = document.createElement('div'); h.className = 'day-header'; h.innerText = `Day ${idx+1}: ${day.date}`;
+        container.appendChild(h);
+
+        let curr = new Date(`2026-01-01T${day.start}`), end = new Date(`2026-01-01T${day.end}`);
+        while(curr < end) {
+            let t = curr.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            let k = `${day.date}|${t}`, b = bookings.find(x => x.slotId === k);
+            const row = document.createElement('div'); row.className = 'signup-row';
+            row.innerHTML = `<div class="signup-time">${t}</div><div class="signup-status">${b ? `<span class="reserved-name">${b.studentName}</span>` : 'Available'}</div><div>${b ? `<button class="btn-cancel" onclick="cancelBooking('${k}')">Cancel</button>` : `<button class="btn btn-signup" onclick="openModal('${k}', '${t}')">Sign Up</button>`}</div>`;
+            container.appendChild(row);
+            curr.setMinutes(curr.getMinutes() + config.duration + 5);
+        }
+    });
+}
+
+function renderDashboard() {
+    const container = document.getElementById('dashboardLists');
+    container.innerHTML = '';
+    config.days.forEach((day, idx) => {
+        if(!day.date) return;
+        const dayB = bookings.filter(b => b.date === day.date).sort((a,b) => a.time.localeCompare(b.time));
+        const div = document.createElement('div'); div.innerHTML = `<span class="dashboard-day-label">Day ${idx+1}: ${day.date}</span>`;
+        if(dayB.length === 0) div.innerHTML += `<p style="color:#999; padding:10px;">No appointments.</p>`;
+        else {
+            dayB.forEach(b => {
+                const item = document.createElement('div'); item.className = 'dashboard-item';
+                item.onclick = () => window.loadMeeting(b.studentId);
+                item.innerHTML = `<span><strong>${b.time}</strong></span><span>${b.studentName}</span>`;
+                div.appendChild(item);
+            });
+        }
+        container.appendChild(div);
+    });
+}
+
+// --- TIMER ---
+let tL, intrvl;
+window.startTimer = () => {
+    if(intrvl) return;
+    intrvl = setInterval(() => { tL--; updateT(); if(tL<=0){ clearInterval(intrvl); alert("Time!"); }}, 1000);
+};
+window.resetTimer = () => { clearInterval(intrvl); intrvl=null; tL=config.duration*60; updateT(); };
+function updateT() { const m=Math.floor(tL/60), s=tL%60; document.getElementById('timer').innerText=`${m}:${s<10?'0':''}${s}`; }
 </script>
 </body>
-</html>
+</html> 
+     
