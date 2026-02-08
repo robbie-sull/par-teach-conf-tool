@@ -1,4 +1,4 @@
-     <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -19,14 +19,7 @@
         }
 
         /* RESET & BASE */
-        body { 
-            font-family: 'Inter', -apple-system, sans-serif; 
-            background: var(--hcs-light-grey); 
-            color: var(--text-main); 
-            margin: 0; 
-            padding-bottom: 80px; 
-            line-height: 1.5;
-        }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--hcs-light-grey); color: var(--text-main); margin: 0; padding-bottom: 80px; line-height: 1.5; }
 
         /* RESPONSIVE HEADER */
         header {
@@ -45,7 +38,9 @@
             header { flex-direction: row; justify-content: space-between; padding: 0.5rem 2rem; }
         }
 
+        .logo-container { display: flex; align-items: center; gap: 15px; }
         .logo-container img { height: 35px; }
+        .teacher-badge { background: rgba(255,255,255,0.2); color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; text-transform: capitalize; }
         @media (min-width: 600px) { .logo-container img { height: 45px; } }
 
         nav { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
@@ -61,6 +56,393 @@
 
         /* MAIN CONTAINER */
         .container { 
+            width: 95%; max-width: 900px; margin: 1rem auto; background: white; padding: 15px; 
+            border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); box-sizing: border-box;
+        }
+        @media (min-width: 600px) { .container { margin: 2rem auto; padding: 2.5rem; } }
+
+        .page { display: none; }
+        .active { display: block; }
+
+        h2 { color: var(--hcs-green); font-size: 1.4rem; border-bottom: 2px solid var(--hcs-light-grey); padding-bottom: 10px; margin-top: 0; }
+
+        /* INPUTS & BUTTONS */
+        input, select, textarea { 
+            font-size: 16px !important; width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;
+        }
+        .btn { 
+            padding: 16px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; border: none; 
+            transition: 0.3s; width: 100%; display: block; text-align: center; font-size: 1rem;
+        }
+        .btn-primary { background: var(--hcs-green); color: white; }
+        .btn-signup { background: var(--success); color: white; padding: 10px 14px; font-size: 0.85rem; width: auto; }
+        .btn-pdf { background: #555; color: white; margin-bottom: 20px; width: auto; display: inline-block; padding: 10px 20px; font-size: 0.8rem; border-radius: 6px;}
+
+        /* SIGNUP ROWS & CARDS */
+        .day-header { background: var(--hcs-green); color: white; padding: 12px 15px; margin-top: 25px; border-radius: 6px; font-weight: bold; }
+        .signup-row { display: flex; align-items: center; justify-content: space-between; padding: 15px 10px; border-bottom: 1px solid #eee; gap: 10px; }
+        .signup-time { font-weight: bold; color: var(--hcs-green); min-width: 80px; }
+        .signup-status { flex-grow: 1; font-size: 0.9rem; }
+
+        /* RESPONSIVE STUDENT LIST */
+        .student-list-container table { width: 100%; border-collapse: collapse; }
+        .student-card { border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        @media (max-width: 600px) { .student-list-container table { display: none; } .student-card { display: flex; } }
+        @media (min-width: 601px) { .student-card { display: none; } }
+
+        /* DASHBOARD */
+        .dashboard-item { border: 1px solid #eee; padding: 15px; background: white; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; margin-bottom: 8px; }
+        .timer-display { font-size: 3.5rem; font-weight: 800; color: var(--hcs-gold); text-align: center; margin: 20px 0; font-family: monospace; }
+        @media (min-width: 600px) { .timer-display { font-size: 5rem; } }
+
+        /* PDF SPECIFIC STYLING */
+        #pdf-header-visual { display: none; text-align: center; margin-bottom: 30px; border-bottom: 3px solid var(--hcs-green); padding-bottom: 20px; }
+        #pdf-header-visual img { height: 60px; margin-bottom: 10px; }
+        #pdf-teacher-note-display { font-style: italic; color: #555; margin-top: 10px; font-size: 1.1rem; }
+
+        /* MODALS */
+        .modal { display:none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
+        .modal-content { background: white; margin: 15% auto; padding: 25px; width: 85%; max-width: 400px; border-radius: 12px; }
+
+        /* PRINT OVERRIDES */
+        #pdf-content { padding: 20px; }
+        .print-only { display: none; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo-container">
+        <img src="HCS_Logo-Secondary-HorizWide-White.png" alt="HCS">
+        <span id="teacherBadge" class="teacher-badge">Default</span>
+    </div>
+    <nav>
+        <button onclick="showPage('config')">Settings</button>
+        <button onclick="showPage('prep')">Students</button>
+        <button onclick="showPage('signup')">Sign-Up</button>
+        <button onclick="showPage('dashboard')">Dashboard</button>
+    </nav>
+</header>
+
+<div class="container">
+    <section id="config" class="page">
+        <h2>Settings</h2>
+        <div class="day-config-card" style="background:#f9f9f9; padding:15px; border-radius:10px; margin-bottom:15px;">
+            <strong>Teacher Message / Room #</strong>
+            <textarea id="teacherNote" placeholder="Example: Room 204. Please wait in the hallway..." rows="2"></textarea>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+            <div class="day-config-card">
+                <strong>Day 1 Date</strong><input type="date" id="date1">
+                <strong>Hours</strong>
+                <div style="display:flex; gap:5px; align-items:center;"><input type="time" id="start1"> to <input type="time" id="end1"></div>
+            </div>
+            <div class="day-config-card">
+                <strong>Day 2 Date</strong><input type="date" id="date2">
+                <strong>Hours</strong>
+                <div style="display:flex; gap:5px; align-items:center;"><input type="time" id="start2"> to <input type="time" id="end2"></div>
+            </div>
+        </div>
+        <label style="display:block; margin-top:15px;">Slot Duration (min)</label>
+        <input type="number" id="duration" value="15">
+        <button class="btn btn-primary" onclick="saveConfig()">Save All Settings</button>
+    </section>
+
+    <section id="prep" class="page">
+        <h2>Student Prep</h2>
+        <input type="text" id="sName" placeholder="Student Name">
+        <input type="text" id="pNames" placeholder="Parent Names">
+        <textarea id="sNotes" placeholder="Talking points..." rows="3"></textarea>
+        <button class="btn btn-primary" onclick="addStudent()">Save Student</button>
+        
+        <h3 style="margin-top: 30px; color: var(--hcs-green)">Class List</h3>
+        <div id="studentListView" class="student-list-container"></div>
+    </section>
+
+    <section id="signup" class="page active">
+        <h2>Conference Sign-Up</h2>
+        <div id="signupContainer"></div>
+    </section>
+
+    <section id="dashboard" class="page">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 20px;">
+            <h2 style="margin:0;">Master Schedule</h2>
+            <button class="btn btn-pdf" onclick="exportToPDF()">Download PDF</button>
+        </div>
+        
+        <div id="pdf-area">
+            <div id="pdf-header-visual">
+                <img src="HCS_Logo-Secondary-HorizWide-White.png" alt="HCS" style="filter: brightness(0) saturate(100%) invert(26%) sepia(19%) saturate(1133%) hue-rotate(81deg) brightness(96%) contrast(89%);">
+                <h1 style="color:var(--hcs-green); margin:0;">Parent-Teacher Conferences</h1>
+                <div id="pdf-teacher-note-display"></div>
+            </div>
+            <div id="dashboardLists"></div>
+        </div>
+
+        <div id="meetingView" style="display:none; margin-top:30px; border-top: 2px solid #eee; padding-top:20px;">
+            <h1 style="color:var(--hcs-green); margin:0;" id="curName"></h1>
+            <p id="curParents" style="color:#666;"></p>
+            <div style="background:#fdfaf3; padding:15px; border-radius:8px; border:1px solid #e9dfc4; margin:15px 0;">
+                <div id="curNotes" style="white-space: pre-wrap;"></div>
+            </div>
+            <div class="timer-display" id="timer">15:00</div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-primary" onclick="startTimer()">Start</button>
+                <button class="btn" style="background:#ccc;" onclick="resetTimer()">Reset</button>
+            </div>
+        </div>
+    </section>
+</div>
+
+<div id="signupModal" class="modal">
+    <div class="modal-content">
+        <h3>Book Slot: <span id="mTime"></span></h3>
+        <select id="mStudentSelect"></select>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="btn btn-primary" onclick="confirmBooking()">Confirm</button>
+            <button class="btn" style="background:#eee" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="adminModal" class="modal">
+    <div class="modal-content">
+        <h3>Admin Access</h3>
+        <input type="password" id="adminPass" placeholder="Password">
+        <button class="btn btn-primary" onclick="checkPassword()" style="margin-top:10px;">Login</button>
+        <button class="btn" style="background:none; color:#999; margin-top:10px;" onclick="closeAdminModal()">Cancel</button>
+    </div>
+</div>
+
+<footer style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+    <button onclick="openAdminModal()" style="background:none; border:none; color:#ccc; font-size:0.8rem; cursor:pointer;">Admin Login</button>
+</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAyLe9NtrYn8CEkyPZmTeDq37kp3kWujJc",
+    authDomain: "hcs-planner.firebaseapp.com",
+    databaseURL: "https://hcs-planner-default-rtdb.firebaseio.com",
+    projectId: "hcs-planner",
+    storageBucket: "hcs-planner.firebasestorage.app",
+    messagingSenderId: "73659830739",
+    appId: "1:73659830739:web:e29f96aea7d83ea4fb1f26"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// --- MULTI-TEACHER LOGIC ---
+const urlParams = new URLSearchParams(window.location.search);
+// Default to 'default' if no teacher is specified
+const teacherID = urlParams.get('teacher') || 'default';
+
+// Update visual badge
+document.getElementById('teacherBadge').innerText = teacherID === 'default' ? 'General' : teacherID;
+
+let config = { teacherNote: '', duration: 15, days: [{date:'',start:'',end:''},{date:'',start:'',end:''}] };
+let students = [];
+let bookings = [];
+let isAdmin = false;
+let activeSlot = null;
+
+// --- EXPOSE FUNCTIONS TO WINDOW ---
+window.showPage = (id) => {
+    if(!isAdmin && id !== 'signup') { alert("Admin access required."); return; }
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+};
+
+window.openAdminModal = () => document.getElementById('adminModal').style.display = 'block';
+window.closeAdminModal = () => document.getElementById('adminModal').style.display = 'none';
+
+window.checkPassword = () => {
+    if(document.getElementById('adminPass').value === "HCS2026") {
+        isAdmin = true;
+        document.body.classList.add('admin-unlocked');
+        window.closeAdminModal();
+        window.showPage('dashboard');
+    } else { alert("Wrong password."); }
+};
+
+window.saveConfig = () => {
+    const newConfig = {
+        teacherNote: document.getElementById('teacherNote').value,
+        duration: parseInt(document.getElementById('duration').value),
+        days: [
+            { date: document.getElementById('date1').value, start: document.getElementById('start1').value, end: document.getElementById('end1').value },
+            { date: document.getElementById('date2').value, start: document.getElementById('start2').value, end: document.getElementById('end2').value }
+        ]
+    };
+    // Save to teacher-specific node
+    set(ref(db, teacherID + '/config'), newConfig);
+    alert("Saved settings for " + teacherID);
+};
+
+window.addStudent = () => {
+    const name = document.getElementById('sName').value;
+    const pNames = document.getElementById('pNames').value;
+    const notes = document.getElementById('sNotes').value;
+    if(!name) return;
+    const id = Date.now();
+    // Save to teacher-specific node
+    set(ref(db, teacherID + '/students/' + id), { id, name, parents: pNames, notes });
+    document.getElementById('sName').value = '';
+    document.getElementById('pNames').value = '';
+    document.getElementById('sNotes').value = '';
+};
+
+window.removeStudent = (id) => remove(ref(db, teacherID + '/students/' + id));
+
+window.openModal = (slotId, timeLabel) => {
+    activeSlot = slotId;
+    document.getElementById('mTime').innerText = timeLabel;
+    const bookedIds = bookings.map(b => b.studentId);
+    const avail = students.filter(s => !bookedIds.includes(s.id));
+    document.getElementById('mStudentSelect').innerHTML = avail.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    if(avail.length === 0) { alert("All students scheduled."); return; }
+    document.getElementById('signupModal').style.display = 'block';
+};
+
+window.closeModal = () => document.getElementById('signupModal').style.display = 'none';
+
+window.confirmBooking = () => {
+    const sId = parseInt(document.getElementById('mStudentSelect').value);
+    const s = students.find(stud => stud.id === sId);
+    const [date, time] = activeSlot.split('|');
+    const bId = activeSlot.replace(/[^a-zA-Z0-9]/g, ""); 
+    // Save to teacher-specific node
+    set(ref(db, teacherID + '/bookings/' + bId), { slotId: activeSlot, date, time, studentId: s.id, studentName: s.name });
+    window.closeModal();
+};
+
+window.cancelBooking = (slotId) => {
+    remove(ref(db, teacherID + '/bookings/' + slotId.replace(/[^a-zA-Z0-9]/g, "")));
+};
+
+window.loadMeeting = (id) => {
+    const s = students.find(stud => stud.id === id);
+    document.getElementById('meetingView').style.display = 'block';
+    document.getElementById('curName').innerText = s.name;
+    document.getElementById('curParents').innerText = s.parents || "No parents listed";
+    document.getElementById('curNotes').innerText = s.notes || "";
+    window.resetTimer();
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+};
+
+// --- PDF EXPORT LOGIC ---
+window.exportToPDF = () => {
+    const element = document.getElementById('pdf-area');
+    const header = document.getElementById('pdf-header-visual');
+    header.style.display = 'block'; 
+    const opt = {
+        margin: 10,
+        filename: `HCS-Conferences-${teacherID}.pdf`, // Added teacherID to filename
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save().then(() => header.style.display = 'none');
+};
+
+// --- TEACHER SPECIFIC LISTENERS ---
+onValue(ref(db, teacherID + '/config'), (snap) => {
+    if (snap.exists()) {
+        config = snap.val();
+        document.getElementById('teacherNote').value = config.teacherNote || '';
+        document.getElementById('pdf-teacher-note-display').innerText = config.teacherNote || '';
+        document.getElementById('date1').value = config.days[0].date;
+        document.getElementById('start1').value = config.days[0].start;
+        document.getElementById('end1').value = config.days[0].end;
+        document.getElementById('date2').value = config.days[1].date;
+        document.getElementById('start2').value = config.days[1].start;
+        document.getElementById('end2').value = config.days[1].end;
+        document.getElementById('duration').value = config.duration;
+    }
+    renderSignup();
+});
+
+onValue(ref(db, teacherID + '/students'), (snap) => {
+    students = snap.exists() ? Object.values(snap.val()) : [];
+    renderStudents();
+});
+
+onValue(ref(db, teacherID + '/bookings'), (snap) => {
+    bookings = snap.exists() ? Object.values(snap.val()) : [];
+    renderSignup();
+    renderDashboard();
+});
+
+// --- RENDERERS ---
+function renderStudents() {
+    const view = document.getElementById('studentListView');
+    let html = `<table style="width:100%; text-align:left;"><tr style="border-bottom:2px solid #eee"><th>Name</th><th>Parents</th><th>Action</th></tr>`;
+    students.forEach(s => {
+        html += `<tr style="border-bottom:1px solid #eee"><td style="padding:10px">${s.name}</td><td>${s.parents}</td><td><button class="btn-cancel" onclick="removeStudent(${s.id})">Del</button></td></tr>`;
+    });
+    html += `</table>`;
+    students.forEach(s => {
+        html += `<div class="student-card"><div><strong>${s.name}</strong><br><small>${s.parents}</small></div><button class="btn-cancel" onclick="removeStudent(${s.id})">Delete</button></div>`;
+    });
+    view.innerHTML = html;
+}
+
+function renderSignup() {
+    const container = document.getElementById('signupContainer');
+    container.innerHTML = '';
+    if(!config.days[0].date) { container.innerHTML = "<p>Teacher is setting up the dates...</p>"; return; }
+
+    config.days.forEach((day, idx) => {
+        if(!day.date) return;
+        const h = document.createElement('div'); h.className = 'day-header'; h.innerText = `Day ${idx+1}: ${day.date}`;
+        container.appendChild(h);
+
+        let curr = new Date(`2026-01-01T${day.start}`), end = new Date(`2026-01-01T${day.end}`);
+        while(curr < end) {
+            let t = curr.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            let k = `${day.date}|${t}`, b = bookings.find(x => x.slotId === k);
+            const row = document.createElement('div'); row.className = 'signup-row';
+            row.innerHTML = `<div class="signup-time">${t}</div><div class="signup-status">${b ? `<span class="reserved-name">${b.studentName}</span>` : 'Available'}</div><div>${b ? `<button class="btn-cancel" onclick="cancelBooking('${k}')">Cancel</button>` : `<button class="btn btn-signup" onclick="openModal('${k}', '${t}')">Sign Up</button>`}</div>`;
+            container.appendChild(row);
+            curr.setMinutes(curr.getMinutes() + config.duration + 5);
+        }
+    });
+}
+
+function renderDashboard() {
+    const container = document.getElementById('dashboardLists');
+    container.innerHTML = '';
+    config.days.forEach((day, idx) => {
+        if(!day.date) return;
+        const dayB = bookings.filter(b => b.date === day.date).sort((a,b) => a.time.localeCompare(b.time));
+        const div = document.createElement('div'); div.innerHTML = `<span class="dashboard-day-label">Day ${idx+1}: ${day.date}</span>`;
+        if(dayB.length === 0) div.innerHTML += `<p style="color:#999; padding:10px;">No appointments.</p>`;
+        else {
+            dayB.forEach(b => {
+                const item = document.createElement('div'); item.className = 'dashboard-item';
+                item.onclick = () => window.loadMeeting(b.studentId);
+                item.innerHTML = `<span><strong>${b.time}</strong></span><span>${b.studentName}</span>`;
+                div.appendChild(item);
+            });
+        }
+        container.appendChild(div);
+    });
+}
+
+// --- TIMER ---
+let tL, intrvl;
+window.startTimer = () => {
+    if(intrvl) return;
+    intrvl = setInterval(() => { tL--; updateT(); if(tL<=0){ clearInterval(intrvl); alert("Time!"); }}, 1000);
+};
+window.resetTimer = () => { clearInterval(intrvl); intrvl=null; tL=config.duration*60; updateT(); };
+function updateT() { const m=Math.floor(tL/60), s=tL%60; document.getElementById('timer').innerText=`${m}:${s<10?'0':''}${s}`; }
+</script>
+</body>
+</html>        .container { 
             width: 95%;
             max-width: 900px; 
             margin: 1rem auto; 
