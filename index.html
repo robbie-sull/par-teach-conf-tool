@@ -1,4 +1,4 @@
-           <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -311,18 +311,50 @@ function setupUIForParent() {
 }
 
 // AUTH FUNCTIONS
+// AUTH FUNCTIONS
 window.appLogin = () => {
-    const e = document.getElementById('loginEmail').value;
-    const p = document.getElementById('loginPass').value;
-    signInWithEmailAndPassword(auth, e, p).catch(err => document.getElementById('authError').innerText = err.message);
+    const emailInput = document.getElementById('loginEmail');
+    const passInput = document.getElementById('loginPass');
+    const errorDisplay = document.getElementById('authError');
+
+    const e = emailInput.value.trim(); // Remove leading/trailing spaces
+    const p = passInput.value;
+
+    // Basic validation
+    if (!e) { errorDisplay.innerText = "Please enter your email."; emailInput.focus(); return; }
+    if (!p) { errorDisplay.innerText = "Please enter your password."; passInput.focus(); return; }
+    errorDisplay.innerText = "Logging in..."; // Temporary loading state
+
+    signInWithEmailAndPassword(auth, e, p)
+        .catch(err => {
+            let msg = err.message;
+            // Make common errors readable
+            if(msg.includes('user-not-found') || msg.includes('wrong-password')) msg = "Invalid email or password.";
+            errorDisplay.innerText = msg;
+        });
 };
 
 window.appRegister = () => {
-    const e = document.getElementById('loginEmail').value;
-    const p = document.getElementById('loginPass').value;
-    createUserWithEmailAndPassword(auth, e, p).catch(err => document.getElementById('authError').innerText = err.message);
-};
+    const emailInput = document.getElementById('loginEmail');
+    const passInput = document.getElementById('loginPass');
+    const errorDisplay = document.getElementById('authError');
 
+    const e = emailInput.value.trim();
+    const p = passInput.value;
+
+    // Basic validation
+    if (!e || !e.includes('@')) { errorDisplay.innerText = "Please enter a valid email address."; emailInput.focus(); return; }
+    if (p.length < 6) { errorDisplay.innerText = "Password must be at least 6 characters long."; passInput.focus(); return; }
+    errorDisplay.innerText = "Creating account...";
+
+    createUserWithEmailAndPassword(auth, e, p)
+        .catch(err => {
+            let msg = err.message;
+            // Make common errors readable
+            if(msg.includes('email-already-in-use')) msg = "An account already exists with this email. Please login.";
+            errorDisplay.innerText = msg;
+        });
+};
 window.appLogout = () => signOut(auth).then(() => window.location.reload());
 
 window.copyLink = () => {
