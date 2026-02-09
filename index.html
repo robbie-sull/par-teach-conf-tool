@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -274,6 +274,22 @@ window.appRegister = () => {
 
 window.appLogout = () => signOut(auth).then(() => window.location.reload());
 
+window.copyLink = () => {
+    const text = document.getElementById('shareLinkDisplay').innerText;
+    // Fallback for better mobile support
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => alert("Link copied!"));
+    } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try { document.execCommand('copy'); alert("Link copied!"); } catch (err) { alert("Unable to copy link."); }
+        document.body.removeChild(textArea);
+    }
+};
+
 function initData() {
     if(!currentTeacherID) return;
     onValue(ref(db, `users/${currentTeacherID}/config`), (snap) => { if(snap.exists()) config = snap.val(); renderSignup(); });
@@ -321,13 +337,24 @@ function renderStudents() {
 
 window.removeStudent = (id) => { if(confirm("Delete?")) remove(ref(db, `users/${currentTeacherID}/students/${id}`)); };
 
-// --- CRITICAL UPDATE: RENDER SIGNUP WITH RULES ---
+// --- CRITICAL UPDATE: SELF-CLEANING RECEIPT LOGIC ---
 function renderSignup() {
     const container = document.getElementById('signupContainer');
     container.innerHTML = '';
     
-    // Check local storage for "Receipts" to enforce 1-slot limit
-    const myBookings = JSON.parse(localStorage.getItem('hcs_my_bookings') || '[]');
+    // 1. Get raw receipts
+    let myBookings = JSON.parse(localStorage.getItem('hcs_my_bookings') || '[]');
+    
+    // 2. SELF-CLEAN: Remove receipts that don't match any real bookings in the DB
+    const realBookingIds = bookings.map(b => b.slotId);
+    const validReceipts = myBookings.filter(receiptId => realBookingIds.includes(receiptId));
+    
+    // 3. Update localStorage if we found junk
+    if (myBookings.length !== validReceipts.length) {
+        localStorage.setItem('hcs_my_bookings', JSON.stringify(validReceipts));
+        myBookings = validReceipts;
+    }
+
     const hasBooking = myBookings.length > 0;
 
     config.days.forEach((day, idx) => {
@@ -344,19 +371,13 @@ function renderSignup() {
             let statusHtml = 'Available';
 
             if (!b) {
-                // If slot is free
                 if (isReadOnly && hasBooking) {
-                    // Parent already has a slot -> Disable
                     btnHtml = `<span class="limit-reached">Limit 1 Slot</span>`;
                 } else {
-                    // Parent/Teacher can book
                     btnHtml = `<button class="btn btn-primary" style="width:auto; padding:5px 10px;" onclick="window.openBooking('${k}', '${t}', '${day.date}')">Sign Up</button>`;
                 }
             } else {
-                // If slot is booked
                 statusHtml = `<span style="color:var(--hcs-gold); font-weight:bold;">${b.studentName}</span>`;
-                
-                // Allow Cancel IF: You are teacher OR You are the parent who booked it
                 if (!isReadOnly || myBookings.includes(k)) {
                     btnHtml = `<button class="btn btn-logout" style="background:#d9534f; color:white;" onclick="window.cancelBooking('${k}')">Cancel</button>`;
                 } else {
@@ -379,8 +400,7 @@ window.openBooking = (id, time, dateStr) => {
     tempBookingData = { date: dateStr, time: time };
     document.getElementById('mTime').innerText = time;
     
-    // CRITICAL UPDATE: Filter out students who are ALREADY booked globally
-    // We convert everything to strings to ensure strict matching
+    // Strict String Filtering
     const bookedStudentIds = bookings.map(b => String(b.studentId));
     const avail = students.filter(s => !bookedStudentIds.includes(String(s.id)));
     
@@ -401,7 +421,6 @@ window.confirmBooking = () => {
         slotId: window.activeSlot, studentName: s.name, studentId: s.id
     });
 
-    // Save Receipt
     let myBookings = JSON.parse(localStorage.getItem('hcs_my_bookings') || '[]');
     myBookings.push(window.activeSlot);
     localStorage.setItem('hcs_my_bookings', JSON.stringify(myBookings));
@@ -421,7 +440,6 @@ window.cancelBooking = (slotId) => {
     }
 };
 
-// CALENDAR LOGIC
 function getDates() {
     const start = new Date(`${tempBookingData.date} ${tempBookingData.time}`);
     const end = new Date(start.getTime() + config.duration * 60000);
@@ -460,7 +478,6 @@ window.loadMeeting = (id) => {
     showPage('dashboard');
 };
 
-// TIMER
 let tL, intrvl;
 window.startTimer = () => { if(intrvl) return; intrvl = setInterval(() => { tL--; updateT(); if(tL<=0){ clearInterval(intrvl); alert("Time!"); }}, 1000); };
 window.resetTimer = () => { clearInterval(intrvl); intrvl=null; tL=config.duration*60; updateT(); };
