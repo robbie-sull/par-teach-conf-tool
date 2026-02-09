@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -82,7 +82,6 @@
         .btn-secondary { background: var(--hcs-gold); color: white; }
         .btn-logout { background: rgba(0,0,0,0.3); font-size: 0.8rem; padding: 5px 10px; width: auto; }
         
-        /* CALENDAR BUTTONS */
         .btn-cal-google { background: #4285F4; color: white; margin-bottom: 5px; }
         .btn-cal-ics { background: #2c3e50; color: white; }
 
@@ -91,8 +90,8 @@
         .signup-row { display: flex; align-items: center; justify-content: space-between; padding: 15px 10px; border-bottom: 1px solid #eee; gap: 10px; }
         .signup-time { font-weight: bold; color: var(--hcs-green); min-width: 80px; }
         .locked-slot { color: #999; font-style: italic; font-size: 0.9rem; }
+        .limit-reached { color: #d9534f; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
 
-        /* TIMER */
         .timer-display { font-size: 3.5rem; font-weight: 800; color: var(--hcs-gold); text-align: center; margin: 20px 0; font-family: monospace; }
         
         .modal { display:none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
@@ -127,20 +126,21 @@
     </header>
 
     <div class="container active" id="main-container">
+        
         <section id="config" class="page">
             <h2>Settings & Share</h2>
             <div style="background:#e8f5e9; padding:15px; border-radius:8px; margin-bottom:20px;">
                 <strong>Parent Link:</strong>
                 <code id="shareLinkDisplay" style="display:block; background:white; padding:5px; margin:5px 0; word-break:break-all;">Generating...</code>
-                <button class="btn btn-secondary" onclick="copyLink()" style="width:auto; padding:8px 15px;">Copy Link</button>
+                <button class="btn btn-secondary" onclick="copyLink()" style="width:auto; display:inline-block; padding: 8px 15px;">Copy Link</button>
             </div>
             <div class="day-config-card">
-                <strong>Day 1 Date & Times</strong>
+                <strong>Day 1</strong>
                 <input type="date" id="date1">
                 <div style="display:flex; gap:10px; align-items:center;"><input type="time" id="start1"> to <input type="time" id="end1"></div>
             </div>
             <div class="day-config-card" style="margin-top:15px;">
-                <strong>Day 2 Date & Times</strong>
+                <strong>Day 2</strong>
                 <input type="date" id="date2">
                 <div style="display:flex; gap:10px; align-items:center;"><input type="time" id="start2"> to <input type="time" id="end2"></div>
             </div>
@@ -157,13 +157,16 @@
         </section>
 
         <section id="signup" class="page">
-            <h2>Conference Sign-Up</h2>
+            <h2 id="signupHeader">Conference Sign-Up</h2>
             <div id="signupContainer"></div>
         </section>
 
         <section id="dashboard" class="page">
-            <h2>Schedule</h2>
-            <div id="dashboardLists"></div>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <h2>Schedule</h2>
+                <button class="btn btn-pdf" onclick="exportToPDF()">Download PDF</button>
+            </div>
+            <div id="pdf-area"><div id="dashboardLists"></div></div>
             <div id="meetingView" style="display:none; margin-top:30px; border-top:2px solid #eee; padding-top:20px;">
                 <h1 id="curName" style="color:var(--hcs-green)"></h1>
                 <div id="curNotes" style="background:#fdfaf3; padding:15px; border-radius:8px; margin:15px 0;"></div>
@@ -185,12 +188,11 @@
 
 <div id="successModal" class="modal">
     <div class="modal-content">
-        <h2 style="color:var(--hcs-green)">Booking Confirmed!</h2>
-        <p>You are all set for <span id="successTime" style="font-weight:bold;"></span>.</p>
+        <h2 style="color:var(--hcs-green)">Confirmed!</h2>
+        <p>You are set for <span id="successTime" style="font-weight:bold;"></span>.</p>
         <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-        <p style="font-size:0.9rem; color:#666; margin-bottom:15px;">Add to your calendar:</p>
         <button class="btn btn-cal-google" onclick="addToGoogleCal()">Add to Google Calendar</button>
-        <button class="btn btn-cal-ics" onclick="downloadICS()">Download Outlook/Apple (.ics)</button>
+        <button class="btn btn-cal-ics" onclick="downloadICS()">Download Outlook (.ics)</button>
         <button class="btn" style="margin-top:15px;" onclick="closeModal('successModal')">Close</button>
     </div>
 </div>
@@ -219,7 +221,7 @@ let students = [];
 let bookings = [];
 let currentTeacherID = null;
 let isReadOnly = false;
-let tempBookingData = {}; // For calendar generation
+let tempBookingData = {};
 
 const urlParams = new URLSearchParams(window.location.search);
 const sharedTeacherID = urlParams.get('tid');
@@ -257,7 +259,6 @@ function setupUI() {
     initData();
 }
 
-// AUTH FUNCTIONS
 window.appLogin = () => {
     const e = document.getElementById('loginEmail').value;
     const p = document.getElementById('loginPass').value;
@@ -274,15 +275,16 @@ window.appRegister = () => {
 window.appLogout = () => signOut(auth).then(() => window.location.reload());
 
 function initData() {
+    if(!currentTeacherID) return;
     onValue(ref(db, `users/${currentTeacherID}/config`), (snap) => { if(snap.exists()) config = snap.val(); renderSignup(); });
     onValue(ref(db, `users/${currentTeacherID}/students`), (snap) => { 
         students = snap.exists() ? Object.values(snap.val()) : []; 
-        renderStudents(); 
+        if(!isReadOnly) renderStudents(); 
     });
     onValue(ref(db, `users/${currentTeacherID}/bookings`), (snap) => { 
         bookings = snap.exists() ? Object.values(snap.val()) : []; 
         renderSignup();
-        renderDashboard();
+        if(!isReadOnly) renderDashboard();
     });
 }
 
@@ -314,16 +316,19 @@ window.addStudent = () => {
 
 function renderStudents() {
     const view = document.getElementById('studentListView');
-    view.innerHTML = students.map(s => `<div style="border-bottom:1px solid #eee; padding:10px;">${s.name}</div>`).join('');
+    view.innerHTML = students.map(s => `<div class="student-card"><div><strong>${s.name}</strong></div><button class="btn-logout" style="background:#d9534f; color:white; border:none;" onclick="window.removeStudent(${s.id})">Delete</button></div>`).join('');
 }
 
-// --- BOOKING LOGIC WITH SECURITY CHECK ---
+window.removeStudent = (id) => { if(confirm("Delete?")) remove(ref(db, `users/${currentTeacherID}/students/${id}`)); };
+
+// --- CRITICAL UPDATE: RENDER SIGNUP WITH RULES ---
 function renderSignup() {
     const container = document.getElementById('signupContainer');
     container.innerHTML = '';
     
-    // Retrieve "receipts" from this device's local storage
+    // Check local storage for "Receipts" to enforce 1-slot limit
     const myBookings = JSON.parse(localStorage.getItem('hcs_my_bookings') || '[]');
+    const hasBooking = myBookings.length > 0;
 
     config.days.forEach((day, idx) => {
         if(!day.date) return;
@@ -335,23 +340,23 @@ function renderSignup() {
             let k = `${day.date}|${t}`;
             let b = bookings.find(x => x.slotId === k);
             
-            // SECURITY LOGIC:
-            // 1. Is it available? Show "Sign Up"
-            // 2. Is it booked?
-            //    a. Is the viewer the Teacher? Show "Cancel"
-            //    b. Did the viewer book it (LocalStorage)? Show "Cancel"
-            //    c. Else? Show "Booked" (Locked)
-            
             let btnHtml = '';
             let statusHtml = 'Available';
 
             if (!b) {
-                // Available
-                btnHtml = `<button class="btn btn-primary" style="width:auto; padding:5px 10px;" onclick="window.openBooking('${k}', '${t}', '${day.date}')">Sign Up</button>`;
+                // If slot is free
+                if (isReadOnly && hasBooking) {
+                    // Parent already has a slot -> Disable
+                    btnHtml = `<span class="limit-reached">Limit 1 Slot</span>`;
+                } else {
+                    // Parent/Teacher can book
+                    btnHtml = `<button class="btn btn-primary" style="width:auto; padding:5px 10px;" onclick="window.openBooking('${k}', '${t}', '${day.date}')">Sign Up</button>`;
+                }
             } else {
+                // If slot is booked
                 statusHtml = `<span style="color:var(--hcs-gold); font-weight:bold;">${b.studentName}</span>`;
                 
-                // Check if user is owner of this booking
+                // Allow Cancel IF: You are teacher OR You are the parent who booked it
                 if (!isReadOnly || myBookings.includes(k)) {
                     btnHtml = `<button class="btn btn-logout" style="background:#d9534f; color:white;" onclick="window.cancelBooking('${k}')">Cancel</button>`;
                 } else {
@@ -371,11 +376,18 @@ function renderSignup() {
 
 window.openBooking = (id, time, dateStr) => {
     window.activeSlot = id;
-    // Save date info for calendar generation
-    tempBookingData = { date: dateStr, time: time }; 
+    tempBookingData = { date: dateStr, time: time };
     document.getElementById('mTime').innerText = time;
+    
+    // CRITICAL UPDATE: Filter out students who are ALREADY booked globally
+    // We convert everything to strings to ensure strict matching
+    const bookedStudentIds = bookings.map(b => String(b.studentId));
+    const avail = students.filter(s => !bookedStudentIds.includes(String(s.id)));
+    
     const sel = document.getElementById('mStudentSelect');
-    sel.innerHTML = students.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    sel.innerHTML = avail.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    
+    if(avail.length === 0) { alert("All students are already scheduled or list is empty."); return; }
     document.getElementById('signupModal').style.display = 'block';
 };
 
@@ -385,19 +397,16 @@ window.confirmBooking = () => {
     const sId = document.getElementById('mStudentSelect').value;
     const s = students.find(x => x.id == sId);
     
-    // Save to Firebase
     set(ref(db, `users/${currentTeacherID}/bookings/${window.activeSlot.replace(/[^a-z0-9]/gi,'')}`), {
         slotId: window.activeSlot, studentName: s.name, studentId: s.id
     });
 
-    // SAVE RECEIPT TO LOCAL STORAGE (Prevents stealing)
+    // Save Receipt
     let myBookings = JSON.parse(localStorage.getItem('hcs_my_bookings') || '[]');
     myBookings.push(window.activeSlot);
     localStorage.setItem('hcs_my_bookings', JSON.stringify(myBookings));
 
     document.getElementById('signupModal').style.display = 'none';
-    
-    // Show Success Modal with Calendar Options
     document.getElementById('successTime').innerText = `${tempBookingData.date} at ${tempBookingData.time}`;
     document.getElementById('successModal').style.display = 'block';
 };
@@ -406,59 +415,40 @@ window.cancelBooking = (slotId) => {
     if(confirm("Cancel this appointment?")) {
         remove(ref(db, `users/${currentTeacherID}/bookings/${slotId.replace(/[^a-z0-9]/gi,'')}`));
         
-        // Remove from local receipt
         let myBookings = JSON.parse(localStorage.getItem('hcs_my_bookings') || '[]');
         myBookings = myBookings.filter(id => id !== slotId);
         localStorage.setItem('hcs_my_bookings', JSON.stringify(myBookings));
     }
-}
+};
 
-// --- CALENDAR LOGIC ---
+// CALENDAR LOGIC
 function getDates() {
-    // Combine Date and Time into Date Object
     const start = new Date(`${tempBookingData.date} ${tempBookingData.time}`);
     const end = new Date(start.getTime() + config.duration * 60000);
-    
-    // Format for Google (YYYYMMDDTHHMMSSZ) - Approximated for local time
     const formatG = (d) => d.toISOString().replace(/-|:|\.\d\d\d/g,"");
-    
-    return { start, end, googleStart: formatG(start), googleEnd: formatG(end) };
+    return { googleStart: formatG(start), googleEnd: formatG(end) };
 }
 
 window.addToGoogleCal = () => {
     const d = getDates();
-    const title = "Parent-Teacher Conference";
-    const details = "Conference at Hudsonville Christian School";
-    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${d.googleStart}/${d.googleEnd}&details=${encodeURIComponent(details)}`;
-    window.open(url, '_blank');
+    window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=Parent-Teacher+Conference&dates=${d.googleStart}/${d.googleEnd}&details=Conference+at+HCS`, '_blank');
 };
 
 window.downloadICS = () => {
     const d = getDates();
-    const title = "Parent-Teacher Conference";
-    
-    // Simple ICS format
-    const icsContent = `BEGIN:VCALENDAR
-VERSION:2.0
-BEGIN:VEVENT
-SUMMARY:${title}
-DTSTART:${d.googleStart}
-DTEND:${d.googleEnd}
-DESCRIPTION:Hudsonville Christian School Conference
-END:VEVENT
-END:VCALENDAR`;
-
+    const icsContent = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:Parent-Teacher Conference\nDTSTART:${d.googleStart}\nDTEND:${d.googleEnd}\nDESCRIPTION:HCS Conference\nEND:VEVENT\nEND:VCALENDAR`;
     const blob = new Blob([icsContent], { type: 'text/calendar' });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'conference.ics';
-    a.click();
+    const a = document.createElement('a'); a.href = url; a.download = 'conference.ics'; a.click();
+};
+
+window.exportToPDF = () => {
+    html2pdf().set({ margin: 10, filename: `HCS-${new Date().toLocaleDateString()}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(document.getElementById('pdf-area')).save();
 };
 
 function renderDashboard() {
     const dash = document.getElementById('dashboardLists');
-    bookings.sort((a,b) => a.slotId.localeCompare(b.slotId)); // Sort chronologically
+    bookings.sort((a,b) => a.slotId.localeCompare(b.slotId));
     dash.innerHTML = bookings.map(b => `<div onclick="window.loadMeeting(${b.studentId})" style="cursor:pointer; padding:10px; border:1px solid #eee; margin-bottom:5px;">${b.slotId.split('|')[1]} - ${b.studentName}</div>`).join('');
 }
 
@@ -469,6 +459,12 @@ window.loadMeeting = (id) => {
     document.getElementById('curNotes').innerText = s.notes;
     showPage('dashboard');
 };
+
+// TIMER
+let tL, intrvl;
+window.startTimer = () => { if(intrvl) return; intrvl = setInterval(() => { tL--; updateT(); if(tL<=0){ clearInterval(intrvl); alert("Time!"); }}, 1000); };
+window.resetTimer = () => { clearInterval(intrvl); intrvl=null; tL=config.duration*60; updateT(); };
+function updateT() { const m=Math.floor(tL/60), s=tL%60; document.getElementById('timer').innerText=`${m}:${s<10?'0':''}${s}`; }
 </script>
 </body>
 </html>
