@@ -216,6 +216,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
 
+// STATE
 let config = { duration: 15, days: [{date:'',start:'',end:''},{date:'',start:'',end:''}] };
 let students = [];
 let bookings = [];
@@ -247,9 +248,10 @@ function setupUI() {
     document.getElementById('main-container').style.display = 'block';
     
     if (isReadOnly) {
-        document.getElementById('nav-config').style.display = 'none';
-        document.getElementById('nav-prep').style.display = 'none';
-        document.getElementById('nav-dash').style.display = 'none';
+        document.getElementById('nav-config').classList.add('nav-hidden');
+        document.getElementById('nav-prep').classList.add('nav-hidden');
+        document.getElementById('nav-dash').classList.add('nav-hidden');
+        document.querySelector('.btn-logout').classList.add('nav-hidden');
         showPage('signup');
     } else {
         const link = `${window.location.origin}${window.location.pathname}?tid=${currentTeacherID}`;
@@ -276,10 +278,10 @@ window.appLogout = () => signOut(auth).then(() => window.location.reload());
 
 window.copyLink = () => {
     const text = document.getElementById('shareLinkDisplay').innerText;
-    // Fallback for better mobile support
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text).then(() => alert("Link copied!"));
     } else {
+        // Fallback for older devices
         const textArea = document.createElement("textarea");
         textArea.value = text;
         document.body.appendChild(textArea);
@@ -311,7 +313,7 @@ window.showPage = (id) => {
 
 window.saveConfig = () => {
     const data = {
-        duration: 15,
+        duration: parseInt(document.getElementById('duration').value),
         days: [
             { date: document.getElementById('date1').value, start: document.getElementById('start1').value, end: document.getElementById('end1').value },
             { date: document.getElementById('date2').value, start: document.getElementById('start2').value, end: document.getElementById('end2').value }
@@ -337,25 +339,20 @@ function renderStudents() {
 
 window.removeStudent = (id) => { if(confirm("Delete?")) remove(ref(db, `users/${currentTeacherID}/students/${id}`)); };
 
-// --- CRITICAL UPDATE: SELF-CLEANING RECEIPT LOGIC ---
+// --- FIXED SIGNUP RENDER ---
 function renderSignup() {
     const container = document.getElementById('signupContainer');
     container.innerHTML = '';
     
-    // 1. Get raw receipts
-    let myBookings = JSON.parse(localStorage.getItem('hcs_my_bookings') || '[]');
+    // 1. Get receipts (No cleaning logic here to prevent race conditions)
+    const myBookings = JSON.parse(localStorage.getItem('hcs_my_bookings') || '[]');
     
-    // 2. SELF-CLEAN: Remove receipts that don't match any real bookings in the DB
-    const realBookingIds = bookings.map(b => b.slotId);
-    const validReceipts = myBookings.filter(receiptId => realBookingIds.includes(receiptId));
-    
-    // 3. Update localStorage if we found junk
-    if (myBookings.length !== validReceipts.length) {
-        localStorage.setItem('hcs_my_bookings', JSON.stringify(validReceipts));
-        myBookings = validReceipts;
-    }
-
-    const hasBooking = myBookings.length > 0;
+    // 2. Are any of my receipts actually valid active bookings?
+    // We check this to determine if the "Limit Reached" message should show.
+    // If I have a receipt for a slot that was deleted by the teacher, I shouldn't be blocked.
+    const activeBookingIds = bookings.map(b => b.slotId);
+    const myActiveBookings = myBookings.filter(receipt => activeBookingIds.includes(receipt));
+    const hasActiveBooking = myActiveBookings.length > 0;
 
     config.days.forEach((day, idx) => {
         if(!day.date) return;
@@ -371,13 +368,18 @@ function renderSignup() {
             let statusHtml = 'Available';
 
             if (!b) {
-                if (isReadOnly && hasBooking) {
+                // SLOT IS FREE
+                if (isReadOnly && hasActiveBooking) {
                     btnHtml = `<span class="limit-reached">Limit 1 Slot</span>`;
                 } else {
+                    // Pass day.date explicitly to fix date mismatch bugs
                     btnHtml = `<button class="btn btn-primary" style="width:auto; padding:5px 10px;" onclick="window.openBooking('${k}', '${t}', '${day.date}')">Sign Up</button>`;
                 }
             } else {
+                // SLOT IS BOOKED
                 statusHtml = `<span style="color:var(--hcs-gold); font-weight:bold;">${b.studentName}</span>`;
+                
+                // Show Cancel IF: Teacher OR Parent owns the receipt
                 if (!isReadOnly || myBookings.includes(k)) {
                     btnHtml = `<button class="btn btn-logout" style="background:#d9534f; color:white;" onclick="window.cancelBooking('${k}')">Cancel</button>`;
                 } else {
@@ -390,6 +392,8 @@ function renderSignup() {
                 <div style="flex-grow:1; margin-left:10px;">${statusHtml}</div>
                 <div>${btnHtml}</div>
             </div>`;
+            
+            // Add buffer time
             curr.setMinutes(curr.getMinutes() + config.duration + 5);
         }
     });
@@ -400,7 +404,7 @@ window.openBooking = (id, time, dateStr) => {
     tempBookingData = { date: dateStr, time: time };
     document.getElementById('mTime').innerText = time;
     
-    // Strict String Filtering
+    // STRICT FILTERING: Ensure ID types match (String vs String)
     const bookedStudentIds = bookings.map(b => String(b.studentId));
     const avail = students.filter(s => !bookedStudentIds.includes(String(s.id)));
     
@@ -417,13 +421,17 @@ window.confirmBooking = () => {
     const sId = document.getElementById('mStudentSelect').value;
     const s = students.find(x => x.id == sId);
     
+    // 1. Save to Firebase
     set(ref(db, `users/${currentTeacherID}/bookings/${window.activeSlot.replace(/[^a-z0-9]/gi,'')}`), {
         slotId: window.activeSlot, studentName: s.name, studentId: s.id
     });
 
+    // 2. Save Receipt
     let myBookings = JSON.parse(localStorage.getItem('hcs_my_bookings') || '[]');
-    myBookings.push(window.activeSlot);
-    localStorage.setItem('hcs_my_bookings', JSON.stringify(myBookings));
+    if (!myBookings.includes(window.activeSlot)) {
+        myBookings.push(window.activeSlot);
+        localStorage.setItem('hcs_my_bookings', JSON.stringify(myBookings));
+    }
 
     document.getElementById('signupModal').style.display = 'none';
     document.getElementById('successTime').innerText = `${tempBookingData.date} at ${tempBookingData.time}`;
@@ -432,14 +440,17 @@ window.confirmBooking = () => {
 
 window.cancelBooking = (slotId) => {
     if(confirm("Cancel this appointment?")) {
+        // 1. Remove from Firebase
         remove(ref(db, `users/${currentTeacherID}/bookings/${slotId.replace(/[^a-z0-9]/gi,'')}`));
         
+        // 2. Remove Receipt
         let myBookings = JSON.parse(localStorage.getItem('hcs_my_bookings') || '[]');
         myBookings = myBookings.filter(id => id !== slotId);
         localStorage.setItem('hcs_my_bookings', JSON.stringify(myBookings));
     }
 };
 
+// CALENDAR LOGIC
 function getDates() {
     const start = new Date(`${tempBookingData.date} ${tempBookingData.time}`);
     const end = new Date(start.getTime() + config.duration * 60000);
