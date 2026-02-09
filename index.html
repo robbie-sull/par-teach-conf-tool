@@ -27,9 +27,15 @@
             line-height: 1.5;
         }
 
-        /* LOGIN SCREEN */
+        /* LOADING SCREEN */
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--hcs-light-grey);
+            display: flex; justify-content: center; align-items: center; z-index: 9999;
+        }
+
+        /* LOGIN SCREEN (Hidden by default) */
         #auth-section {
-            display: flex; justify-content: center; align-items: center; min-height: 80vh; padding: 20px;
+            display: none; justify-content: center; align-items: center; min-height: 80vh; padding: 20px;
         }
         .auth-card {
             background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
@@ -99,6 +105,13 @@
     </style>
 </head>
 <body>
+
+<div id="loading-screen">
+    <div style="text-align:center;">
+        <img src="HCS_Logo-Secondary-HorizWide-White.png" alt="HCS" style="filter: invert(0.8); height:40px; margin-bottom:15px;">
+        <div style="color:#666;">Loading...</div>
+    </div>
+</div>
 
 <div id="auth-section">
     <div class="auth-card">
@@ -216,18 +229,20 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
 
-// STATE
 let config = { duration: 15, days: [{date:'',start:'',end:''},{date:'',start:'',end:''}] };
 let students = [];
 let bookings = [];
 let currentTeacherID = null;
 let isReadOnly = false;
-let tempBookingData = {};
+let tempBookingData = {}; // Stores { date, time, studentName }
 
 const urlParams = new URLSearchParams(window.location.search);
 const sharedTeacherID = urlParams.get('tid');
 
 onAuthStateChanged(auth, (user) => {
+    // Determine which UI to show, then hide loader
+    const loader = document.getElementById('loading-screen');
+    
     if (user) {
         currentTeacherID = user.uid;
         isReadOnly = false;
@@ -238,8 +253,8 @@ onAuthStateChanged(auth, (user) => {
         setupUI();
     } else {
         document.getElementById('auth-section').style.display = 'flex';
-        document.getElementById('app-section').style.display = 'none';
     }
+    loader.style.display = 'none'; // Fade out loader
 });
 
 function setupUI() {
@@ -281,7 +296,6 @@ window.copyLink = () => {
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text).then(() => alert("Link copied!"));
     } else {
-        // Fallback for older devices
         const textArea = document.createElement("textarea");
         textArea.value = text;
         document.body.appendChild(textArea);
@@ -339,17 +353,12 @@ function renderStudents() {
 
 window.removeStudent = (id) => { if(confirm("Delete?")) remove(ref(db, `users/${currentTeacherID}/students/${id}`)); };
 
-// --- FIXED SIGNUP RENDER ---
 function renderSignup() {
     const container = document.getElementById('signupContainer');
     container.innerHTML = '';
     
-    // 1. Get receipts (No cleaning logic here to prevent race conditions)
+    // Receipt Logic
     const myBookings = JSON.parse(localStorage.getItem('hcs_my_bookings') || '[]');
-    
-    // 2. Are any of my receipts actually valid active bookings?
-    // We check this to determine if the "Limit Reached" message should show.
-    // If I have a receipt for a slot that was deleted by the teacher, I shouldn't be blocked.
     const activeBookingIds = bookings.map(b => b.slotId);
     const myActiveBookings = myBookings.filter(receipt => activeBookingIds.includes(receipt));
     const hasActiveBooking = myActiveBookings.length > 0;
@@ -368,18 +377,13 @@ function renderSignup() {
             let statusHtml = 'Available';
 
             if (!b) {
-                // SLOT IS FREE
                 if (isReadOnly && hasActiveBooking) {
                     btnHtml = `<span class="limit-reached">Limit 1 Slot</span>`;
                 } else {
-                    // Pass day.date explicitly to fix date mismatch bugs
                     btnHtml = `<button class="btn btn-primary" style="width:auto; padding:5px 10px;" onclick="window.openBooking('${k}', '${t}', '${day.date}')">Sign Up</button>`;
                 }
             } else {
-                // SLOT IS BOOKED
                 statusHtml = `<span style="color:var(--hcs-gold); font-weight:bold;">${b.studentName}</span>`;
-                
-                // Show Cancel IF: Teacher OR Parent owns the receipt
                 if (!isReadOnly || myBookings.includes(k)) {
                     btnHtml = `<button class="btn btn-logout" style="background:#d9534f; color:white;" onclick="window.cancelBooking('${k}')">Cancel</button>`;
                 } else {
@@ -392,8 +396,6 @@ function renderSignup() {
                 <div style="flex-grow:1; margin-left:10px;">${statusHtml}</div>
                 <div>${btnHtml}</div>
             </div>`;
-            
-            // Add buffer time
             curr.setMinutes(curr.getMinutes() + config.duration + 5);
         }
     });
@@ -401,10 +403,9 @@ function renderSignup() {
 
 window.openBooking = (id, time, dateStr) => {
     window.activeSlot = id;
-    tempBookingData = { date: dateStr, time: time };
+    tempBookingData = { date: dateStr, time: time, studentName: '' }; // Reset student name
     document.getElementById('mTime').innerText = time;
     
-    // STRICT FILTERING: Ensure ID types match (String vs String)
     const bookedStudentIds = bookings.map(b => String(b.studentId));
     const avail = students.filter(s => !bookedStudentIds.includes(String(s.id)));
     
@@ -421,12 +422,14 @@ window.confirmBooking = () => {
     const sId = document.getElementById('mStudentSelect').value;
     const s = students.find(x => x.id == sId);
     
-    // 1. Save to Firebase
+    // Save student name to temp data for Calendar
+    tempBookingData.studentName = s.name;
+
     set(ref(db, `users/${currentTeacherID}/bookings/${window.activeSlot.replace(/[^a-z0-9]/gi,'')}`), {
         slotId: window.activeSlot, studentName: s.name, studentId: s.id
     });
 
-    // 2. Save Receipt
+    // Save Receipt
     let myBookings = JSON.parse(localStorage.getItem('hcs_my_bookings') || '[]');
     if (!myBookings.includes(window.activeSlot)) {
         myBookings.push(window.activeSlot);
@@ -434,23 +437,28 @@ window.confirmBooking = () => {
     }
 
     document.getElementById('signupModal').style.display = 'none';
+    
+    // INSTANT UI UPDATE: Re-render logic locally so they see changes immediately
+    renderSignup(); 
+    
     document.getElementById('successTime').innerText = `${tempBookingData.date} at ${tempBookingData.time}`;
     document.getElementById('successModal').style.display = 'block';
 };
 
 window.cancelBooking = (slotId) => {
     if(confirm("Cancel this appointment?")) {
-        // 1. Remove from Firebase
         remove(ref(db, `users/${currentTeacherID}/bookings/${slotId.replace(/[^a-z0-9]/gi,'')}`));
         
-        // 2. Remove Receipt
         let myBookings = JSON.parse(localStorage.getItem('hcs_my_bookings') || '[]');
         myBookings = myBookings.filter(id => id !== slotId);
         localStorage.setItem('hcs_my_bookings', JSON.stringify(myBookings));
+        
+        // INSTANT UI UPDATE
+        renderSignup();
     }
 };
 
-// CALENDAR LOGIC
+// CALENDAR LOGIC WITH STUDENT NAME
 function getDates() {
     const start = new Date(`${tempBookingData.date} ${tempBookingData.time}`);
     const end = new Date(start.getTime() + config.duration * 60000);
@@ -460,12 +468,14 @@ function getDates() {
 
 window.addToGoogleCal = () => {
     const d = getDates();
-    window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=Parent-Teacher+Conference&dates=${d.googleStart}/${d.googleEnd}&details=Conference+at+HCS`, '_blank');
+    const title = `Conference: ${tempBookingData.studentName}`;
+    window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${d.googleStart}/${d.googleEnd}&details=Parent-Teacher+Conference+for+${encodeURIComponent(tempBookingData.studentName)}`, '_blank');
 };
 
 window.downloadICS = () => {
     const d = getDates();
-    const icsContent = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:Parent-Teacher Conference\nDTSTART:${d.googleStart}\nDTEND:${d.googleEnd}\nDESCRIPTION:HCS Conference\nEND:VEVENT\nEND:VCALENDAR`;
+    const title = `Conference: ${tempBookingData.studentName}`;
+    const icsContent = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${title}\nDTSTART:${d.googleStart}\nDTEND:${d.googleEnd}\nDESCRIPTION:Parent-Teacher Conference for ${tempBookingData.studentName}\nEND:VEVENT\nEND:VCALENDAR`;
     const blob = new Blob([icsContent], { type: 'text/calendar' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'conference.ics'; a.click();
