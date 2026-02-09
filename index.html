@@ -18,7 +18,6 @@
             --success: #4b7f52;
         }
 
-        /* RESET & BASE */
         body { 
             font-family: 'Inter', -apple-system, sans-serif; 
             background: var(--hcs-light-grey); 
@@ -36,7 +35,6 @@
             background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             width: 100%; max-width: 400px; text-align: center;
         }
-        .auth-card img { height: 50px; margin-bottom: 20px; }
 
         /* HEADER */
         header {
@@ -56,90 +54,69 @@
         }
 
         .logo-container img { height: 35px; }
-        @media (min-width: 600px) { .logo-container img { height: 45px; } }
-
-        nav { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
+        nav { display: flex; gap: 5px; }
         nav button { 
             background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); 
             color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; 
-            font-weight: 600; font-size: 0.75rem; transition: 0.2s;
+            font-weight: 600; font-size: 0.75rem;
         }
         .nav-hidden { display: none !important; }
 
-        /* MAIN CONTAINER */
+        /* CONTAINERS */
         .container { 
             width: 95%; max-width: 900px; margin: 1rem auto; background: white; padding: 15px; 
             border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); box-sizing: border-box;
-            display: none; /* Hidden until loaded */
+            display: none; 
         }
-        @media (min-width: 600px) { .container { margin: 2rem auto; padding: 2.5rem; } }
-
         .page { display: none; }
         .active { display: block; }
 
-        h2 { color: var(--hcs-green); font-size: 1.4rem; border-bottom: 2px solid var(--hcs-light-grey); padding-bottom: 10px; margin-top: 0; }
-
-        /* INPUTS & BUTTONS */
         input, select, textarea { 
-            font-size: 16px !important; width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;
+            font-size: 16px; width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;
         }
         .btn { 
             padding: 16px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; border: none; 
-            transition: 0.3s; width: 100%; display: block; text-align: center; font-size: 1rem; margin-top: 10px;
+            width: 100%; font-size: 1rem; margin-top: 10px;
         }
         .btn-primary { background: var(--hcs-green); color: white; }
         .btn-secondary { background: var(--hcs-gold); color: white; }
-        .btn-logout { background: rgba(0,0,0,0.3); font-size: 0.8rem; padding: 5px 10px; margin-top: 0; width: auto; display: inline-block; }
+        .btn-logout { background: rgba(0,0,0,0.3); font-size: 0.8rem; padding: 5px 10px; width: auto; }
         
-        .btn-signup { background: var(--success); color: white; padding: 10px 14px; font-size: 0.85rem; width: auto; }
-        .btn-pdf { background: #555; color: white; margin-bottom: 20px; width: auto; display: inline-block; padding: 10px 20px; font-size: 0.8rem; }
+        /* CALENDAR BUTTONS */
+        .btn-cal-google { background: #4285F4; color: white; margin-bottom: 5px; }
+        .btn-cal-ics { background: #2c3e50; color: white; }
 
         /* SIGNUP ROWS */
         .day-header { background: var(--hcs-green); color: white; padding: 12px 15px; margin-top: 25px; border-radius: 6px; font-weight: bold; }
         .signup-row { display: flex; align-items: center; justify-content: space-between; padding: 15px 10px; border-bottom: 1px solid #eee; gap: 10px; }
         .signup-time { font-weight: bold; color: var(--hcs-green); min-width: 80px; }
-        .signup-status { flex-grow: 1; font-size: 0.9rem; }
+        .locked-slot { color: #999; font-style: italic; font-size: 0.9rem; }
 
-        /* SHARE BOX */
-        .share-box { background: #e8f5e9; border: 1px solid #c8e6c9; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
-        .share-link { font-family: monospace; background: white; padding: 5px; border: 1px solid #ccc; display: block; word-break: break-all; margin: 5px 0; }
-
-        /* STUDENT LIST */
-        .student-card { border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-
-        /* DASHBOARD */
-        .dashboard-item { border: 1px solid #eee; padding: 15px; background: white; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; margin-bottom: 8px; }
+        /* TIMER */
         .timer-display { font-size: 3.5rem; font-weight: 800; color: var(--hcs-gold); text-align: center; margin: 20px 0; font-family: monospace; }
         
-        /* MODALS */
         .modal { display:none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
-        .modal-content { background: white; margin: 15% auto; padding: 25px; width: 85%; max-width: 400px; border-radius: 12px; }
-
-        /* PRINT */
-        #pdf-content { padding: 20px; }
+        .modal-content { background: white; margin: 15% auto; padding: 25px; width: 85%; max-width: 400px; border-radius: 12px; text-align: center; }
     </style>
 </head>
 <body>
 
 <div id="auth-section">
     <div class="auth-card">
-        <img src="HCS_Logo-Secondary-HorizWide-White.png" alt="HCS" style="filter: invert(1); height:40px;"> 
-        <h2 style="border:none;">Teacher Login</h2>
+        <img src="HCS_Logo-Secondary-HorizWide-White.png" alt="HCS" style="filter: invert(1); height:40px; margin-bottom:20px;"> 
+        <h2 style="color:var(--hcs-green)">Teacher Login</h2>
         <input type="email" id="loginEmail" placeholder="School Email">
         <input type="password" id="loginPass" placeholder="Password">
         <button class="btn btn-primary" onclick="appLogin()">Login</button>
         <button class="btn btn-secondary" onclick="appRegister()">Create New Account</button>
-        <p id="authError" style="color:red; font-size:0.9rem; margin-top:10px;"></p>
-        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-        <p style="font-size:0.8rem; color:#666;">Parents: Please use the link provided by your teacher.</p>
+        <p id="authError" style="color:red; font-size:0.85rem; margin-top:10px;"></p>
+        <p style="font-size:0.8rem; color:#666; margin-top:20px;">Parents: Please use the link provided by your teacher.</p>
     </div>
 </div>
 
 <div id="app-section" style="display:none;">
     <header>
-        <div class="logo-container">
-            <img src="HCS_Logo-Secondary-HorizWide-White.png" alt="HCS">
-        </div>
+        <div class="logo-container"><img src="HCS_Logo-Secondary-HorizWide-White.png" alt="HCS"></div>
         <nav>
             <button id="nav-config" onclick="showPage('config')">Settings</button>
             <button id="nav-prep" onclick="showPage('prep')">Students</button>
@@ -150,33 +127,24 @@
     </header>
 
     <div class="container active" id="main-container">
-        
         <section id="config" class="page">
             <h2>Settings & Share</h2>
-            
-            <div class="share-box">
-                <strong>Send this link to parents:</strong>
-                <code id="shareLinkDisplay" class="share-link">Generating...</code>
-                <button class="btn btn-secondary" onclick="copyLink()" style="width:auto; display:inline-block; padding: 8px 15px;">Copy Link</button>
+            <div style="background:#e8f5e9; padding:15px; border-radius:8px; margin-bottom:20px;">
+                <strong>Parent Link:</strong>
+                <code id="shareLinkDisplay" style="display:block; background:white; padding:5px; margin:5px 0; word-break:break-all;">Generating...</code>
+                <button class="btn btn-secondary" onclick="copyLink()" style="width:auto; padding:8px 15px;">Copy Link</button>
             </div>
-
             <div class="day-config-card">
-                <strong style="color:var(--hcs-green)">Day 1</strong>
+                <strong>Day 1 Date & Times</strong>
                 <input type="date" id="date1">
-                <div style="display:flex; gap:10px; align-items: center;">
-                    <input type="time" id="start1" value="15:30"> to <input type="time" id="end1" value="19:00">
-                </div>
+                <div style="display:flex; gap:10px; align-items:center;"><input type="time" id="start1"> to <input type="time" id="end1"></div>
             </div>
-            <div class="day-config-card">
-                <strong style="color:var(--hcs-green)">Day 2</strong>
+            <div class="day-config-card" style="margin-top:15px;">
+                <strong>Day 2 Date & Times</strong>
                 <input type="date" id="date2">
-                <div style="display:flex; gap:10px; align-items: center;">
-                    <input type="time" id="start2" value="08:00"> to <input type="time" id="end2" value="12:00">
-                </div>
+                <div style="display:flex; gap:10px; align-items:center;"><input type="time" id="start2"> to <input type="time" id="end2"></div>
             </div>
-            <label>Slot Duration (min)</label>
-            <input type="number" id="duration" value="15">
-            <button class="btn btn-primary" onclick="saveConfig()">Save All Settings</button>
+            <button class="btn btn-primary" onclick="saveConfig()">Save Settings</button>
         </section>
 
         <section id="prep" class="page">
@@ -184,38 +152,23 @@
             <input type="text" id="sName" placeholder="Student Name">
             <input type="text" id="pNames" placeholder="Parent Names">
             <textarea id="sNotes" placeholder="Talking points..." rows="3"></textarea>
-            <button class="btn btn-primary" onclick="addStudent()">Save Student</button>
-            
-            <h3 style="margin-top: 30px; color: var(--hcs-green)">Class List</h3>
-            <div id="studentListView" class="student-list-container"></div>
+            <button class="btn btn-primary" onclick="addStudent()">Add Student</button>
+            <div id="studentListView" style="margin-top:20px;"></div>
         </section>
 
         <section id="signup" class="page">
-            <h2 id="signupHeader">Conference Sign-Up</h2>
+            <h2>Conference Sign-Up</h2>
             <div id="signupContainer"></div>
         </section>
 
         <section id="dashboard" class="page">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-                <h2>Master Schedule</h2>
-                <button class="btn btn-pdf" onclick="exportToPDF()">Download PDF</button>
-            </div>
-            
-            <div id="pdf-area">
-                <div id="dashboardLists"></div>
-            </div>
-
-            <div id="meetingView" style="display:none; margin-top:30px; border-top: 2px solid #eee; padding-top:20px;">
-                <h1 style="color:var(--hcs-green); margin:0;" id="curName"></h1>
-                <p id="curParents" style="color:#666;"></p>
-                <div style="background:#fdfaf3; padding:15px; border-radius:8px; border:1px solid #e9dfc4; margin:15px 0;">
-                    <div id="curNotes" style="white-space: pre-wrap;"></div>
-                </div>
+            <h2>Schedule</h2>
+            <div id="dashboardLists"></div>
+            <div id="meetingView" style="display:none; margin-top:30px; border-top:2px solid #eee; padding-top:20px;">
+                <h1 id="curName" style="color:var(--hcs-green)"></h1>
+                <div id="curNotes" style="background:#fdfaf3; padding:15px; border-radius:8px; margin:15px 0;"></div>
                 <div class="timer-display" id="timer">15:00</div>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn btn-primary" onclick="startTimer()">Start</button>
-                    <button class="btn" style="background:#ccc;" onclick="resetTimer()">Reset</button>
-                </div>
+                <button class="btn btn-primary" onclick="startTimer()">Start</button>
             </div>
         </section>
     </div>
@@ -225,10 +178,20 @@
     <div class="modal-content">
         <h3>Book Slot: <span id="mTime"></span></h3>
         <select id="mStudentSelect"></select>
-        <div style="display:flex; gap:10px; margin-top:20px;">
-            <button class="btn btn-primary" onclick="confirmBooking()">Confirm</button>
-            <button class="btn" style="background:#eee" onclick="closeModal()">Cancel</button>
-        </div>
+        <button class="btn btn-primary" onclick="confirmBooking()">Confirm</button>
+        <button class="btn" onclick="closeModal('signupModal')">Cancel</button>
+    </div>
+</div>
+
+<div id="successModal" class="modal">
+    <div class="modal-content">
+        <h2 style="color:var(--hcs-green)">Booking Confirmed!</h2>
+        <p>You are all set for <span id="successTime" style="font-weight:bold;"></span>.</p>
+        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+        <p style="font-size:0.9rem; color:#666; margin-bottom:15px;">Add to your calendar:</p>
+        <button class="btn btn-cal-google" onclick="addToGoogleCal()">Add to Google Calendar</button>
+        <button class="btn btn-cal-ics" onclick="downloadICS()">Download Outlook/Apple (.ics)</button>
+        <button class="btn" style="margin-top:15px;" onclick="closeModal('successModal')">Close</button>
     </div>
 </div>
 
@@ -251,330 +214,261 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
 
-// STATE
 let config = { duration: 15, days: [{date:'',start:'',end:''},{date:'',start:'',end:''}] };
 let students = [];
 let bookings = [];
-let activeSlot = null;
 let currentTeacherID = null;
-let isReadOnly = false; // True if parent view
+let isReadOnly = false;
+let tempBookingData = {}; // For calendar generation
 
-// --- AUTH LOGIC ---
 const urlParams = new URLSearchParams(window.location.search);
 const sharedTeacherID = urlParams.get('tid');
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        // --- TEACHER LOGGED IN ---
         currentTeacherID = user.uid;
         isReadOnly = false;
-        setupUIForTeacher();
-        initDataListeners();
+        setupUI();
     } else if (sharedTeacherID) {
-        // --- PARENT VIEW MODE ---
         currentTeacherID = sharedTeacherID;
         isReadOnly = true;
-        setupUIForParent();
-        initDataListeners();
+        setupUI();
     } else {
-        // --- NO LOGIN / NO LINK ---
         document.getElementById('auth-section').style.display = 'flex';
         document.getElementById('app-section').style.display = 'none';
     }
 });
 
-// UI SETUP HELPERS
-function setupUIForTeacher() {
+function setupUI() {
     document.getElementById('auth-section').style.display = 'none';
     document.getElementById('app-section').style.display = 'block';
     document.getElementById('main-container').style.display = 'block';
     
-    // Generate Share Link
-    const link = `${window.location.origin}${window.location.pathname}?tid=${currentTeacherID}`;
-    document.getElementById('shareLinkDisplay').innerText = link;
-
-    showPage('config'); // Teachers start at settings
+    if (isReadOnly) {
+        document.getElementById('nav-config').style.display = 'none';
+        document.getElementById('nav-prep').style.display = 'none';
+        document.getElementById('nav-dash').style.display = 'none';
+        showPage('signup');
+    } else {
+        const link = `${window.location.origin}${window.location.pathname}?tid=${currentTeacherID}`;
+        document.getElementById('shareLinkDisplay').innerText = link;
+        showPage('config');
+    }
+    initData();
 }
 
-function setupUIForParent() {
-    document.getElementById('auth-section').style.display = 'none';
-    document.getElementById('app-section').style.display = 'block';
-    document.getElementById('main-container').style.display = 'block';
-
-    // Hide Teacher Controls
-    document.getElementById('nav-config').classList.add('nav-hidden');
-    document.getElementById('nav-prep').classList.add('nav-hidden');
-    document.getElementById('nav-dash').classList.add('nav-hidden');
-    document.querySelector('.btn-logout').classList.add('nav-hidden');
-    
-    showPage('signup'); // Parents go straight to signup
-}
-
-// AUTH FUNCTIONS
 // AUTH FUNCTIONS
 window.appLogin = () => {
-    const emailInput = document.getElementById('loginEmail');
-    const passInput = document.getElementById('loginPass');
-    const errorDisplay = document.getElementById('authError');
-
-    const e = emailInput.value.trim(); // Remove leading/trailing spaces
-    const p = passInput.value;
-
-    // Basic validation
-    if (!e) { errorDisplay.innerText = "Please enter your email."; emailInput.focus(); return; }
-    if (!p) { errorDisplay.innerText = "Please enter your password."; passInput.focus(); return; }
-    errorDisplay.innerText = "Logging in..."; // Temporary loading state
-
-    signInWithEmailAndPassword(auth, e, p)
-        .catch(err => {
-            let msg = err.message;
-            // Make common errors readable
-            if(msg.includes('user-not-found') || msg.includes('wrong-password')) msg = "Invalid email or password.";
-            errorDisplay.innerText = msg;
-        });
+    const e = document.getElementById('loginEmail').value;
+    const p = document.getElementById('loginPass').value;
+    signInWithEmailAndPassword(auth, e, p).catch(err => document.getElementById('authError').innerText = err.message);
 };
 
 window.appRegister = () => {
-    const emailInput = document.getElementById('loginEmail');
-    const passInput = document.getElementById('loginPass');
-    const errorDisplay = document.getElementById('authError');
-
-    const e = emailInput.value.trim();
-    const p = passInput.value;
-
-    // Basic validation
-    if (!e || !e.includes('@')) { errorDisplay.innerText = "Please enter a valid email address."; emailInput.focus(); return; }
-    if (p.length < 6) { errorDisplay.innerText = "Password must be at least 6 characters long."; passInput.focus(); return; }
-    errorDisplay.innerText = "Creating account...";
-
-    createUserWithEmailAndPassword(auth, e, p)
-        .catch(err => {
-            let msg = err.message;
-            // Make common errors readable
-            if(msg.includes('email-already-in-use')) msg = "An account already exists with this email. Please login.";
-            errorDisplay.innerText = msg;
-        });
+    const e = document.getElementById('loginEmail').value;
+    const p = document.getElementById('loginPass').value;
+    if(!e || p.length < 6) { alert("Enter valid email and 6+ char password."); return; }
+    createUserWithEmailAndPassword(auth, e, p).catch(err => document.getElementById('authError').innerText = err.message);
 };
+
 window.appLogout = () => signOut(auth).then(() => window.location.reload());
 
-window.copyLink = () => {
-    navigator.clipboard.writeText(document.getElementById('shareLinkDisplay').innerText);
-    alert("Link copied! Send this to parents.");
-};
-
-// --- DATABASE PATH HELPER (Namespacing) ---
-function getDbPath(path) {
-    if(!currentTeacherID) return null;
-    return `users/${currentTeacherID}/${path}`;
-}
-
-// --- DATA LISTENERS ---
-function initDataListeners() {
-    if(!currentTeacherID) return;
-
-    onValue(ref(db, getDbPath('config')), (snap) => {
-        if (snap.exists()) {
-            config = snap.val();
-            // Only populate inputs if we are the teacher
-            if(!isReadOnly) {
-                document.getElementById('date1').value = config.days[0].date;
-                document.getElementById('start1').value = config.days[0].start;
-                document.getElementById('end1').value = config.days[0].end;
-                document.getElementById('date2').value = config.days[1].date;
-                document.getElementById('start2').value = config.days[1].start;
-                document.getElementById('end2').value = config.days[1].end;
-                document.getElementById('duration').value = config.duration;
-            }
-        }
-        renderSignup();
+function initData() {
+    onValue(ref(db, `users/${currentTeacherID}/config`), (snap) => { if(snap.exists()) config = snap.val(); renderSignup(); });
+    onValue(ref(db, `users/${currentTeacherID}/students`), (snap) => { 
+        students = snap.exists() ? Object.values(snap.val()) : []; 
+        renderStudents(); 
     });
-
-    onValue(ref(db, getDbPath('students')), (snap) => {
-        students = snap.exists() ? Object.values(snap.val()) : [];
-        if(!isReadOnly) renderStudents();
-    });
-
-    onValue(ref(db, getDbPath('bookings')), (snap) => {
-        bookings = snap.exists() ? Object.values(snap.val()) : [];
+    onValue(ref(db, `users/${currentTeacherID}/bookings`), (snap) => { 
+        bookings = snap.exists() ? Object.values(snap.val()) : []; 
         renderSignup();
-        if(!isReadOnly) renderDashboard();
+        renderDashboard();
     });
 }
 
-// --- NAVIGATION ---
 window.showPage = (id) => {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
 };
 
-// --- CORE FUNCTIONS ---
 window.saveConfig = () => {
-    if(isReadOnly) return;
-    const newConfig = {
-        duration: parseInt(document.getElementById('duration').value),
+    const data = {
+        duration: 15,
         days: [
             { date: document.getElementById('date1').value, start: document.getElementById('start1').value, end: document.getElementById('end1').value },
             { date: document.getElementById('date2').value, start: document.getElementById('start2').value, end: document.getElementById('end2').value }
         ]
     };
-    set(ref(db, getDbPath('config')), newConfig);
-    alert("Saved to cloud!");
+    set(ref(db, `users/${currentTeacherID}/config`), data);
+    alert("Settings Saved!");
 };
 
 window.addStudent = () => {
-    if(isReadOnly) return;
-    const name = document.getElementById('sName').value;
-    const pNames = document.getElementById('pNames').value;
-    const notes = document.getElementById('sNotes').value;
-    if(!name) return;
     const id = Date.now();
-    set(ref(db, getDbPath('students/' + id)), { id, name, parents: pNames, notes });
-    // clear inputs
+    const s = { id, name: document.getElementById('sName').value, parents: document.getElementById('pNames').value, notes: document.getElementById('sNotes').value };
+    set(ref(db, `users/${currentTeacherID}/students/${id}`), s);
     document.getElementById('sName').value = '';
     document.getElementById('pNames').value = '';
     document.getElementById('sNotes').value = '';
 };
 
-window.removeStudent = (id) => {
-    if(isReadOnly) return;
-    if(confirm("Delete this student?")) remove(ref(db, getDbPath('students/' + id)));
-};
-
-// --- BOOKING LOGIC ---
-window.openModal = (slotId, timeLabel) => {
-    activeSlot = slotId;
-    document.getElementById('mTime').innerText = timeLabel;
-    
-    // Filter out students who are already booked
-    const bookedIds = bookings.map(b => b.studentId);
-    const avail = students.filter(s => !bookedIds.includes(s.id));
-    
-    const select = document.getElementById('mStudentSelect');
-    select.innerHTML = avail.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-    
-    if(avail.length === 0) { alert("All students are already scheduled or list is empty."); return; }
-    document.getElementById('signupModal').style.display = 'block';
-};
-
-window.closeModal = () => document.getElementById('signupModal').style.display = 'none';
-
-window.confirmBooking = () => {
-    const sId = parseInt(document.getElementById('mStudentSelect').value);
-    const s = students.find(stud => stud.id === sId);
-    const [date, time] = activeSlot.split('|');
-    const bId = activeSlot.replace(/[^a-zA-Z0-9]/g, ""); 
-    
-    // Both Teachers and Parents can WRITE bookings (controlled by Firebase Rules)
-    set(ref(db, getDbPath('bookings/' + bId)), { slotId: activeSlot, date, time, studentId: s.id, studentName: s.name });
-    window.closeModal();
-};
-
-window.cancelBooking = (slotId) => {
-    // Both can cancel (simplification for this app level)
-    if(confirm("Cancel this appointment?")) {
-        remove(ref(db, getDbPath('bookings/' + slotId.replace(/[^a-zA-Z0-9]/g, ""))));
-    }
-};
-
-window.loadMeeting = (id) => {
-    const s = students.find(stud => stud.id === id);
-    document.getElementById('meetingView').style.display = 'block';
-    document.getElementById('curName').innerText = s.name;
-    document.getElementById('curParents').innerText = s.parents || "No parents listed";
-    document.getElementById('curNotes').innerText = s.notes || "";
-    window.resetTimer();
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-};
-
-// --- EXPORT PDF ---
-window.exportToPDF = () => {
-    const element = document.getElementById('pdf-area');
-    const opt = {
-        margin: 10,
-        filename: `HCS-Conferences-${new Date().toLocaleDateString()}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    html2pdf().set(opt).from(element).save();
-};
-
-// --- RENDERERS ---
 function renderStudents() {
     const view = document.getElementById('studentListView');
-    let html = ``;
-    students.forEach(s => {
-        html += `<div class="student-card">
-            <div><strong>${s.name}</strong><br><small>${s.parents}</small></div>
-            <button class="btn btn-logout" style="background:#d9534f; color:white; border:none;" onclick="removeStudent(${s.id})">Delete</button>
-        </div>`;
-    });
-    view.innerHTML = html;
+    view.innerHTML = students.map(s => `<div style="border-bottom:1px solid #eee; padding:10px;">${s.name}</div>`).join('');
 }
 
+// --- BOOKING LOGIC WITH SECURITY CHECK ---
 function renderSignup() {
     const container = document.getElementById('signupContainer');
     container.innerHTML = '';
-    if(!config.days || !config.days[0].date) { container.innerHTML = "<p>Dates not set by teacher yet.</p>"; return; }
+    
+    // Retrieve "receipts" from this device's local storage
+    const myBookings = JSON.parse(localStorage.getItem('hcs_my_bookings') || '[]');
 
     config.days.forEach((day, idx) => {
         if(!day.date) return;
-        const h = document.createElement('div'); h.className = 'day-header'; h.innerText = `Day ${idx+1}: ${day.date}`;
-        container.appendChild(h);
-
+        container.innerHTML += `<div class="day-header">Day ${idx+1}: ${day.date}</div>`;
         let curr = new Date(`2026-01-01T${day.start}`), end = new Date(`2026-01-01T${day.end}`);
+        
         while(curr < end) {
             let t = curr.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            let k = `${day.date}|${t}`, b = bookings.find(x => x.slotId === k);
-            const row = document.createElement('div'); row.className = 'signup-row';
+            let k = `${day.date}|${t}`;
+            let b = bookings.find(x => x.slotId === k);
             
-            let actionBtn = '';
-            if(b) {
-                // If booked: Show Cancel button
-                actionBtn = `<button class="btn btn-logout" style="background:#d9534f; color:white;" onclick="cancelBooking('${k}')">Cancel</button>`;
+            // SECURITY LOGIC:
+            // 1. Is it available? Show "Sign Up"
+            // 2. Is it booked?
+            //    a. Is the viewer the Teacher? Show "Cancel"
+            //    b. Did the viewer book it (LocalStorage)? Show "Cancel"
+            //    c. Else? Show "Booked" (Locked)
+            
+            let btnHtml = '';
+            let statusHtml = 'Available';
+
+            if (!b) {
+                // Available
+                btnHtml = `<button class="btn btn-primary" style="width:auto; padding:5px 10px;" onclick="window.openBooking('${k}', '${t}', '${day.date}')">Sign Up</button>`;
             } else {
-                // If free: Show Sign Up button
-                actionBtn = `<button class="btn btn-signup" onclick="openModal('${k}', '${t}')">Sign Up</button>`;
+                statusHtml = `<span style="color:var(--hcs-gold); font-weight:bold;">${b.studentName}</span>`;
+                
+                // Check if user is owner of this booking
+                if (!isReadOnly || myBookings.includes(k)) {
+                    btnHtml = `<button class="btn btn-logout" style="background:#d9534f; color:white;" onclick="window.cancelBooking('${k}')">Cancel</button>`;
+                } else {
+                    btnHtml = `<span class="locked-slot">Reserved</span>`;
+                }
             }
 
-            row.innerHTML = `<div class="signup-time">${t}</div>
-                             <div class="signup-status">${b ? `<span style="color:var(--hcs-gold); font-weight:bold;">${b.studentName}</span>` : 'Available'}</div>
-                             <div>${actionBtn}</div>`;
-            container.appendChild(row);
+            container.innerHTML += `<div class="signup-row">
+                <div class="signup-time">${t}</div>
+                <div style="flex-grow:1; margin-left:10px;">${statusHtml}</div>
+                <div>${btnHtml}</div>
+            </div>`;
             curr.setMinutes(curr.getMinutes() + config.duration + 5);
         }
     });
 }
 
-function renderDashboard() {
-    const container = document.getElementById('dashboardLists');
-    container.innerHTML = '';
-    config.days.forEach((day, idx) => {
-        if(!day.date) return;
-        const dayB = bookings.filter(b => b.date === day.date).sort((a,b) => a.time.localeCompare(b.time));
-        const div = document.createElement('div'); div.innerHTML = `<h3 style="color:var(--hcs-green); margin-bottom:10px;">Day ${idx+1}: ${day.date}</h3>`;
-        
-        if(dayB.length === 0) div.innerHTML += `<p style="color:#999; padding:10px;">No appointments.</p>`;
-        else {
-            dayB.forEach(b => {
-                const item = document.createElement('div'); item.className = 'dashboard-item';
-                item.onclick = () => window.loadMeeting(b.studentId);
-                item.innerHTML = `<span><strong>${b.time}</strong></span><span>${b.studentName}</span>`;
-                div.appendChild(item);
-            });
-        }
-        container.appendChild(div);
+window.openBooking = (id, time, dateStr) => {
+    window.activeSlot = id;
+    // Save date info for calendar generation
+    tempBookingData = { date: dateStr, time: time }; 
+    document.getElementById('mTime').innerText = time;
+    const sel = document.getElementById('mStudentSelect');
+    sel.innerHTML = students.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    document.getElementById('signupModal').style.display = 'block';
+};
+
+window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+
+window.confirmBooking = () => {
+    const sId = document.getElementById('mStudentSelect').value;
+    const s = students.find(x => x.id == sId);
+    
+    // Save to Firebase
+    set(ref(db, `users/${currentTeacherID}/bookings/${window.activeSlot.replace(/[^a-z0-9]/gi,'')}`), {
+        slotId: window.activeSlot, studentName: s.name, studentId: s.id
     });
+
+    // SAVE RECEIPT TO LOCAL STORAGE (Prevents stealing)
+    let myBookings = JSON.parse(localStorage.getItem('hcs_my_bookings') || '[]');
+    myBookings.push(window.activeSlot);
+    localStorage.setItem('hcs_my_bookings', JSON.stringify(myBookings));
+
+    document.getElementById('signupModal').style.display = 'none';
+    
+    // Show Success Modal with Calendar Options
+    document.getElementById('successTime').innerText = `${tempBookingData.date} at ${tempBookingData.time}`;
+    document.getElementById('successModal').style.display = 'block';
+};
+
+window.cancelBooking = (slotId) => {
+    if(confirm("Cancel this appointment?")) {
+        remove(ref(db, `users/${currentTeacherID}/bookings/${slotId.replace(/[^a-z0-9]/gi,'')}`));
+        
+        // Remove from local receipt
+        let myBookings = JSON.parse(localStorage.getItem('hcs_my_bookings') || '[]');
+        myBookings = myBookings.filter(id => id !== slotId);
+        localStorage.setItem('hcs_my_bookings', JSON.stringify(myBookings));
+    }
 }
 
-// --- TIMER ---
-let tL, intrvl;
-window.startTimer = () => {
-    if(intrvl) return;
-    intrvl = setInterval(() => { tL--; updateT(); if(tL<=0){ clearInterval(intrvl); alert("Time!"); }}, 1000);
+// --- CALENDAR LOGIC ---
+function getDates() {
+    // Combine Date and Time into Date Object
+    const start = new Date(`${tempBookingData.date} ${tempBookingData.time}`);
+    const end = new Date(start.getTime() + config.duration * 60000);
+    
+    // Format for Google (YYYYMMDDTHHMMSSZ) - Approximated for local time
+    const formatG = (d) => d.toISOString().replace(/-|:|\.\d\d\d/g,"");
+    
+    return { start, end, googleStart: formatG(start), googleEnd: formatG(end) };
+}
+
+window.addToGoogleCal = () => {
+    const d = getDates();
+    const title = "Parent-Teacher Conference";
+    const details = "Conference at Hudsonville Christian School";
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${d.googleStart}/${d.googleEnd}&details=${encodeURIComponent(details)}`;
+    window.open(url, '_blank');
 };
-window.resetTimer = () => { clearInterval(intrvl); intrvl=null; tL=config.duration*60; updateT(); };
-function updateT() { const m=Math.floor(tL/60), s=tL%60; document.getElementById('timer').innerText=`${m}:${s<10?'0':''}${s}`; }
+
+window.downloadICS = () => {
+    const d = getDates();
+    const title = "Parent-Teacher Conference";
+    
+    // Simple ICS format
+    const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+SUMMARY:${title}
+DTSTART:${d.googleStart}
+DTEND:${d.googleEnd}
+DESCRIPTION:Hudsonville Christian School Conference
+END:VEVENT
+END:VCALENDAR`;
+
+    const blob = new Blob([icsContent], { type: 'text/calendar' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'conference.ics';
+    a.click();
+};
+
+function renderDashboard() {
+    const dash = document.getElementById('dashboardLists');
+    bookings.sort((a,b) => a.slotId.localeCompare(b.slotId)); // Sort chronologically
+    dash.innerHTML = bookings.map(b => `<div onclick="window.loadMeeting(${b.studentId})" style="cursor:pointer; padding:10px; border:1px solid #eee; margin-bottom:5px;">${b.slotId.split('|')[1]} - ${b.studentName}</div>`).join('');
+}
+
+window.loadMeeting = (id) => {
+    const s = students.find(x => x.id == id);
+    document.getElementById('meetingView').style.display = 'block';
+    document.getElementById('curName').innerText = s.name;
+    document.getElementById('curNotes').innerText = s.notes;
+    showPage('dashboard');
+};
 </script>
 </body>
 </html>
