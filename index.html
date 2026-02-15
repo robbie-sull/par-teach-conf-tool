@@ -86,7 +86,7 @@
         }
         .btn-primary { background: var(--hcs-green); color: white; }
         .btn-secondary { background: var(--hcs-gold); color: white; }
-        .btn-logout { background: rgba(0,0,0,0.3); font-size: 0.8rem; padding: 5px 10px; width: auto; }
+        .btn-logout { background: rgba(0,0,0,0.3); font-size: 0.8rem; padding: 5px 10px; width: auto; display: inline-block;}
         
         .btn-cal-google { background: #4285F4; color: white; margin-bottom: 5px; }
         .btn-cal-ics { background: #2c3e50; color: white; }
@@ -102,6 +102,9 @@
         
         .modal { display:none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
         .modal-content { background: white; margin: 15% auto; padding: 25px; width: 85%; max-width: 400px; border-radius: 12px; text-align: center; }
+
+        /* STUDENT LIST */
+        .student-card { border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
@@ -157,6 +160,10 @@
                 <input type="date" id="date2">
                 <div style="display:flex; gap:10px; align-items:center;"><input type="time" id="start2"> to <input type="time" id="end2"></div>
             </div>
+            
+            <label style="display:block; margin-top:20px; font-weight:bold;">Slot Duration (min)</label>
+            <input type="number" id="duration" value="15" style="margin-bottom:20px;">
+            
             <button class="btn btn-primary" onclick="saveConfig()">Save Settings</button>
         </section>
 
@@ -165,7 +172,8 @@
             <input type="text" id="sName" placeholder="Student Name">
             <input type="text" id="pNames" placeholder="Parent Names">
             <textarea id="sNotes" placeholder="Talking points..." rows="3"></textarea>
-            <button class="btn btn-primary" onclick="addStudent()">Add Student</button>
+            
+            <button id="addStudentBtn" class="btn btn-primary" onclick="addStudent()">Add Student</button>
             <div id="studentListView" style="margin-top:20px;"></div>
         </section>
 
@@ -177,14 +185,14 @@
         <section id="dashboard" class="page">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                 <h2>Schedule</h2>
-                <button class="btn btn-pdf" onclick="exportToPDF()">Download PDF</button>
+                <button class="btn btn-pdf" style="margin-bottom:0;" onclick="exportToPDF()">Download PDF</button>
             </div>
             <div id="pdf-area"><div id="dashboardLists"></div></div>
             <div id="meetingView" style="display:none; margin-top:30px; border-top:2px solid #eee; padding-top:20px;">
                 <h1 id="curName" style="color:var(--hcs-green)"></h1>
                 <div id="curNotes" style="background:#fdfaf3; padding:15px; border-radius:8px; margin:15px 0;"></div>
                 <div class="timer-display" id="timer">15:00</div>
-                <button class="btn btn-primary" onclick="startTimer()">Start</button>
+                <button class="btn btn-primary" onclick="startTimer()">Start Timer</button>
             </div>
         </section>
     </div>
@@ -195,7 +203,7 @@
         <h3>Book Slot: <span id="mTime"></span></h3>
         <select id="mStudentSelect"></select>
         <button class="btn btn-primary" onclick="confirmBooking()">Confirm</button>
-        <button class="btn" onclick="closeModal('signupModal')">Cancel</button>
+        <button class="btn" style="margin-top:10px; background:#eee;" onclick="closeModal('signupModal')">Cancel</button>
     </div>
 </div>
 
@@ -206,7 +214,7 @@
         <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
         <button class="btn btn-cal-google" onclick="addToGoogleCal()">Add to Google Calendar</button>
         <button class="btn btn-cal-ics" onclick="downloadICS()">Download Outlook (.ics)</button>
-        <button class="btn" style="margin-top:15px;" onclick="closeModal('successModal')">Close</button>
+        <button class="btn" style="margin-top:15px; background:#eee;" onclick="closeModal('successModal')">Close</button>
     </div>
 </div>
 
@@ -234,15 +242,14 @@ let students = [];
 let bookings = [];
 let currentTeacherID = null;
 let isReadOnly = false;
-let tempBookingData = {}; // Stores { date, time, studentName }
+let tempBookingData = {};
+let editingStudentId = null; // Tracks if we are editing an existing student
 
 const urlParams = new URLSearchParams(window.location.search);
 const sharedTeacherID = urlParams.get('tid');
 
 onAuthStateChanged(auth, (user) => {
-    // Determine which UI to show, then hide loader
     const loader = document.getElementById('loading-screen');
-    
     if (user) {
         currentTeacherID = user.uid;
         isReadOnly = false;
@@ -254,7 +261,7 @@ onAuthStateChanged(auth, (user) => {
     } else {
         document.getElementById('auth-section').style.display = 'flex';
     }
-    loader.style.display = 'none'; // Fade out loader
+    loader.style.display = 'none'; 
 });
 
 function setupUI() {
@@ -308,11 +315,33 @@ window.copyLink = () => {
 
 function initData() {
     if(!currentTeacherID) return;
-    onValue(ref(db, `users/${currentTeacherID}/config`), (snap) => { if(snap.exists()) config = snap.val(); renderSignup(); });
+    
+    // RESTORED: Hydrate Config Fields
+    onValue(ref(db, `users/${currentTeacherID}/config`), (snap) => { 
+        if(snap.exists()) {
+            config = snap.val(); 
+            if(!isReadOnly) {
+                if(config.days[0]) {
+                    document.getElementById('date1').value = config.days[0].date || '';
+                    document.getElementById('start1').value = config.days[0].start || '';
+                    document.getElementById('end1').value = config.days[0].end || '';
+                }
+                if(config.days[1]) {
+                    document.getElementById('date2').value = config.days[1].date || '';
+                    document.getElementById('start2').value = config.days[1].start || '';
+                    document.getElementById('end2').value = config.days[1].end || '';
+                }
+                document.getElementById('duration').value = config.duration || 15;
+            }
+        }
+        renderSignup(); 
+    });
+
     onValue(ref(db, `users/${currentTeacherID}/students`), (snap) => { 
         students = snap.exists() ? Object.values(snap.val()) : []; 
         if(!isReadOnly) renderStudents(); 
     });
+    
     onValue(ref(db, `users/${currentTeacherID}/bookings`), (snap) => { 
         bookings = snap.exists() ? Object.values(snap.val()) : []; 
         renderSignup();
@@ -327,7 +356,7 @@ window.showPage = (id) => {
 
 window.saveConfig = () => {
     const data = {
-        duration: parseInt(document.getElementById('duration').value),
+        duration: parseInt(document.getElementById('duration').value) || 15,
         days: [
             { date: document.getElementById('date1').value, start: document.getElementById('start1').value, end: document.getElementById('end1').value },
             { date: document.getElementById('date2').value, start: document.getElementById('start2').value, end: document.getElementById('end2').value }
@@ -337,27 +366,64 @@ window.saveConfig = () => {
     alert("Settings Saved!");
 };
 
+// ADDED: Edit Logic
+window.editStudent = (id) => {
+    const s = students.find(x => x.id === id);
+    if(!s) return;
+    
+    document.getElementById('sName').value = s.name || '';
+    document.getElementById('pNames').value = s.parents || '';
+    document.getElementById('sNotes').value = s.notes || '';
+    
+    editingStudentId = id;
+    document.getElementById('addStudentBtn').innerText = 'Update Student';
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll back up to the form
+};
+
 window.addStudent = () => {
-    const id = Date.now();
-    const s = { id, name: document.getElementById('sName').value, parents: document.getElementById('pNames').value, notes: document.getElementById('sNotes').value };
+    const name = document.getElementById('sName').value;
+    if(!name) { alert('Student name is required.'); return; }
+
+    const id = editingStudentId || Date.now();
+    const s = { id, name, parents: document.getElementById('pNames').value, notes: document.getElementById('sNotes').value };
+    
     set(ref(db, `users/${currentTeacherID}/students/${id}`), s);
+    
+    // Auto-update their name in the schedule if they are already booked
+    if (editingStudentId) {
+        bookings.forEach(b => {
+            if(b.studentId === id) {
+                set(ref(db, `users/${currentTeacherID}/bookings/${b.slotId.replace(/[^a-z0-9]/gi,'')}/studentName`), name);
+            }
+        });
+    }
+
     document.getElementById('sName').value = '';
     document.getElementById('pNames').value = '';
     document.getElementById('sNotes').value = '';
+    
+    editingStudentId = null;
+    document.getElementById('addStudentBtn').innerText = 'Add Student';
 };
 
 function renderStudents() {
     const view = document.getElementById('studentListView');
-    view.innerHTML = students.map(s => `<div class="student-card"><div><strong>${s.name}</strong></div><button class="btn-logout" style="background:#d9534f; color:white; border:none;" onclick="window.removeStudent(${s.id})">Delete</button></div>`).join('');
+    view.innerHTML = students.map(s => `
+        <div class="student-card">
+            <div><strong>${s.name}</strong><br><small style="color:#666;">${s.parents || ''}</small></div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-logout" style="background:var(--hcs-gold); color:white; border:none;" onclick="window.editStudent(${s.id})">Edit</button>
+                <button class="btn-logout" style="background:#d9534f; color:white; border:none;" onclick="window.removeStudent(${s.id})">Delete</button>
+            </div>
+        </div>`).join('');
 }
 
-window.removeStudent = (id) => { if(confirm("Delete?")) remove(ref(db, `users/${currentTeacherID}/students/${id}`)); };
+window.removeStudent = (id) => { if(confirm("Delete this student?")) remove(ref(db, `users/${currentTeacherID}/students/${id}`)); };
 
 function renderSignup() {
     const container = document.getElementById('signupContainer');
     container.innerHTML = '';
     
-    // Receipt Logic
     const myBookings = JSON.parse(localStorage.getItem('hcs_my_bookings') || '[]');
     const activeBookingIds = bookings.map(b => b.slotId);
     const myActiveBookings = myBookings.filter(receipt => activeBookingIds.includes(receipt));
@@ -385,7 +451,7 @@ function renderSignup() {
             } else {
                 statusHtml = `<span style="color:var(--hcs-gold); font-weight:bold;">${b.studentName}</span>`;
                 if (!isReadOnly || myBookings.includes(k)) {
-                    btnHtml = `<button class="btn btn-logout" style="background:#d9534f; color:white;" onclick="window.cancelBooking('${k}')">Cancel</button>`;
+                    btnHtml = `<button class="btn btn-logout" style="background:#d9534f; color:white; border:none;" onclick="window.cancelBooking('${k}')">Cancel</button>`;
                 } else {
                     btnHtml = `<span class="locked-slot">Reserved</span>`;
                 }
@@ -403,7 +469,7 @@ function renderSignup() {
 
 window.openBooking = (id, time, dateStr) => {
     window.activeSlot = id;
-    tempBookingData = { date: dateStr, time: time, studentName: '' }; // Reset student name
+    tempBookingData = { date: dateStr, time: time, studentName: '' };
     document.getElementById('mTime').innerText = time;
     
     const bookedStudentIds = bookings.map(b => String(b.studentId));
@@ -422,14 +488,12 @@ window.confirmBooking = () => {
     const sId = document.getElementById('mStudentSelect').value;
     const s = students.find(x => x.id == sId);
     
-    // Save student name to temp data for Calendar
     tempBookingData.studentName = s.name;
 
     set(ref(db, `users/${currentTeacherID}/bookings/${window.activeSlot.replace(/[^a-z0-9]/gi,'')}`), {
         slotId: window.activeSlot, studentName: s.name, studentId: s.id
     });
 
-    // Save Receipt
     let myBookings = JSON.parse(localStorage.getItem('hcs_my_bookings') || '[]');
     if (!myBookings.includes(window.activeSlot)) {
         myBookings.push(window.activeSlot);
@@ -437,8 +501,6 @@ window.confirmBooking = () => {
     }
 
     document.getElementById('signupModal').style.display = 'none';
-    
-    // INSTANT UI UPDATE: Re-render logic locally so they see changes immediately
     renderSignup(); 
     
     document.getElementById('successTime').innerText = `${tempBookingData.date} at ${tempBookingData.time}`;
@@ -452,13 +514,10 @@ window.cancelBooking = (slotId) => {
         let myBookings = JSON.parse(localStorage.getItem('hcs_my_bookings') || '[]');
         myBookings = myBookings.filter(id => id !== slotId);
         localStorage.setItem('hcs_my_bookings', JSON.stringify(myBookings));
-        
-        // INSTANT UI UPDATE
         renderSignup();
     }
 };
 
-// CALENDAR LOGIC WITH STUDENT NAME
 function getDates() {
     const start = new Date(`${tempBookingData.date} ${tempBookingData.time}`);
     const end = new Date(start.getTime() + config.duration * 60000);
@@ -482,7 +541,7 @@ window.downloadICS = () => {
 };
 
 window.exportToPDF = () => {
-    html2pdf().set({ margin: 10, filename: `HCS-${new Date().toLocaleDateString()}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(document.getElementById('pdf-area')).save();
+    html2pdf().set({ margin: 10, filename: `HCS-Schedule.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(document.getElementById('pdf-area')).save();
 };
 
 function renderDashboard() {
@@ -495,14 +554,35 @@ window.loadMeeting = (id) => {
     const s = students.find(x => x.id == id);
     document.getElementById('meetingView').style.display = 'block';
     document.getElementById('curName').innerText = s.name;
-    document.getElementById('curNotes').innerText = s.notes;
+    document.getElementById('curNotes').innerText = s.notes || "No notes provided.";
+    
+    // RESTORED: Reset the timer cleanly when a new meeting is loaded
+    window.resetTimer(); 
     showPage('dashboard');
 };
 
+// TIMER LOGIC
 let tL, intrvl;
-window.startTimer = () => { if(intrvl) return; intrvl = setInterval(() => { tL--; updateT(); if(tL<=0){ clearInterval(intrvl); alert("Time!"); }}, 1000); };
-window.resetTimer = () => { clearInterval(intrvl); intrvl=null; tL=config.duration*60; updateT(); };
-function updateT() { const m=Math.floor(tL/60), s=tL%60; document.getElementById('timer').innerText=`${m}:${s<10?'0':''}${s}`; }
+window.startTimer = () => { 
+    if(intrvl) return; 
+    // Ensure tL defaults if somehow missed
+    if(tL === undefined || isNaN(tL)) tL = (config.duration || 15) * 60; 
+    
+    intrvl = setInterval(() => { 
+        tL--; updateT(); 
+        if(tL<=0){ clearInterval(intrvl); alert("Time's up!"); }
+    }, 1000); 
+};
+window.resetTimer = () => { 
+    clearInterval(intrvl); 
+    intrvl=null; 
+    tL=(config.duration || 15)*60; 
+    updateT(); 
+};
+function updateT() { 
+    const m=Math.floor(tL/60), s=tL%60; 
+    document.getElementById('timer').innerText=`${m}:${s<10?'0':''}${s}`; 
+}
 </script>
 </body>
 </html>
